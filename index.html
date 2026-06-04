@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameVault — منصة الألعاب</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- ===== BACKGROUND ===== -->
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <span class="logo-text">GAMEVAULT</span>
+    </div>
+    <div class="nav-search">
+      <input type="text" id="searchInput" placeholder="ابحث عن لعبة..." />
+      <button onclick="performSearch()" class="search-btn">🔍</button>
+    </div>
+    <div class="nav-actions" id="navActions">
+      <button class="btn-ghost" onclick="showModal('loginModal')">دخول</button>
+      <button class="btn-primary" onclick="showModal('registerModal')">سجّل</button>
+    </div>
+    <div class="nav-user hidden" id="navUser">
+      <div class="user-avatar-nav" id="navAvatar" onclick="goToProfile()"></div>
+      <span id="navUsername"></span>
+      <button class="btn-ghost small" onclick="logout()">خروج</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="heroSection">
+  <div class="hero-content">
+    <p class="hero-tag">منصة ألعاب الويب</p>
+    <h1 class="hero-title">العب. شارك.<br/><span class="gradient-text">اكتشف.</span></h1>
+    <p class="hero-sub">ارفع ألعابك المصنوعة بـ HTML · Unity · Godot · Unreal<br/>وشاركها مع ملايين اللاعبين</p>
+    <div class="hero-btns">
+      <button class="btn-primary large" onclick="showSection('browse')">استعرض الألعاب</button>
+      <button class="btn-outline large" onclick="requireAuth(()=>showSection('upload'))">ارفع لعبتك</button>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="floating-cards">
+      <div class="fcard c1">🎮</div>
+      <div class="fcard c2">🕹️</div>
+      <div class="fcard c3">👾</div>
+      <div class="fcard c4">🏆</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main-content">
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab active" data-tab="browse" onclick="showSection('browse')">🎮 تصفح الألعاب</button>
+    <button class="tab" data-tab="upload" onclick="requireAuth(()=>showSection('upload'))">⬆ ارفع لعبة</button>
+    <button class="tab" data-tab="profile" onclick="requireAuth(()=>showSection('profile'))">👤 ملفي</button>
+  </div>
+
+  <!-- ===== BROWSE SECTION ===== -->
+  <section id="section-browse" class="section active">
+    <div class="section-header">
+      <h2>الألعاب المتاحة</h2>
+      <div class="filters">
+        <select id="filterEngine" onchange="loadGames()">
+          <option value="">كل المحركات</option>
+          <option value="html">HTML5</option>
+          <option value="unity">Unity</option>
+          <option value="godot">Godot</option>
+          <option value="ue4">Unreal Engine</option>
+        </select>
+        <select id="filterSort" onchange="loadGames()">
+          <option value="created_at">الأحدث</option>
+          <option value="likes">الأكثر إعجاباً</option>
+        </select>
+      </div>
+    </div>
+    <div class="games-grid" id="gamesGrid">
+      <div class="loader">جاري التحميل...</div>
+    </div>
+  </section>
+
+  <!-- ===== UPLOAD SECTION ===== -->
+  <section id="section-upload" class="section">
+    <div class="form-card">
+      <h2>ارفع لعبتك</h2>
+      <p class="form-subtitle">شارك إبداعك مع المجتمع</p>
+
+      <div class="form-group">
+        <label>اسم اللعبة *</label>
+        <input type="text" id="gameTitle" placeholder="اسم مميز للعبتك" />
+      </div>
+
+      <div class="form-group">
+        <label>وصف اللعبة *</label>
+        <textarea id="gameDesc" rows="4" placeholder="اشرح قصة وميزات لعبتك..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>محرك اللعبة *</label>
+          <select id="gameEngine">
+            <option value="html">HTML5 / JavaScript</option>
+            <option value="unity">Unity WebGL</option>
+            <option value="godot">Godot</option>
+            <option value="ue4">Unreal Engine 4</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>الفئة</label>
+          <select id="gameCategory">
+            <option value="action">أكشن</option>
+            <option value="puzzle">ألغاز</option>
+            <option value="adventure">مغامرات</option>
+            <option value="strategy">استراتيجية</option>
+            <option value="racing">سباقات</option>
+            <option value="other">أخرى</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>كلمات مفتاحية (مفصولة بفاصلة)</label>
+        <input type="text" id="gameTags" placeholder="مثال: حرب، استراتيجية، متعدد لاعبين" />
+      </div>
+
+      <div class="form-group">
+        <label>رابط اللعبة (URL مباشر لملف index.html أو iframe) *</label>
+        <input type="url" id="gameUrl" placeholder="https://..." />
+      </div>
+
+      <div class="form-group">
+        <label>رابط صورة الغلاف *</label>
+        <input type="url" id="gameThumbnail" placeholder="https://..." />
+      </div>
+
+      <div class="form-group toggle-row">
+        <label>السماح بأرشفة جوجل (SEO)</label>
+        <div class="toggle" id="seoToggle" onclick="toggleSeo()" data-on="true">
+          <div class="toggle-knob"></div>
+        </div>
+      </div>
+
+      <button class="btn-primary full" onclick="uploadGame()">🚀 نشر اللعبة</button>
+      <div id="uploadMsg" class="msg hidden"></div>
+    </div>
+  </section>
+
+  <!-- ===== PROFILE SECTION ===== -->
+  <section id="section-profile" class="section">
+    <div class="profile-layout">
+      <div class="profile-card">
+        <div class="avatar-wrapper">
+          <div class="avatar-display" id="profileAvatar"></div>
+          <label class="avatar-upload-btn" for="avatarInput">📷 تغيير الصورة</label>
+          <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(event)" hidden />
+        </div>
+        <div class="profile-info">
+          <div class="form-group">
+            <label>اسم المستخدم</label>
+            <input type="text" id="profileUsername" placeholder="اسمك الظاهر" />
+          </div>
+          <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="profileEmail" disabled />
+          </div>
+          <div class="form-group">
+            <label>رقم الهاتف</label>
+            <input type="tel" id="profilePhone" placeholder="+218..." />
+          </div>
+          <div class="form-group">
+            <label>نبذة عنك</label>
+            <textarea id="profileBio" rows="3" placeholder="أخبر المجتمع عن نفسك..."></textarea>
+          </div>
+          <button class="btn-primary" onclick="saveProfile()">💾 حفظ التغييرات</button>
+          <div id="profileMsg" class="msg hidden"></div>
+        </div>
+      </div>
+
+      <div class="my-games-section">
+        <h3>ألعابي المرفوعة</h3>
+        <div class="games-grid small" id="myGamesGrid">
+          <div class="loader">جاري التحميل...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== GAME MODAL ===== -->
+<div class="modal-overlay" id="gameModal" onclick="closeGameModal(event)">
+  <div class="modal game-modal">
+    <button class="modal-close" onclick="closeModal('gameModal')">✕</button>
+    <div class="game-modal-inner">
+      <div class="game-play-area">
+        <iframe id="gameFrame" src="" allowfullscreen></iframe>
+      </div>
+      <div class="game-info-panel">
+        <h2 id="gmTitle"></h2>
+        <div class="game-meta">
+          <span id="gmEngine" class="badge"></span>
+          <span id="gmCategory" class="badge"></span>
+        </div>
+        <p id="gmDesc"></p>
+        <div class="game-tags" id="gmTags"></div>
+        <div class="game-actions">
+          <button class="action-btn like-btn" id="likeBtn" onclick="toggleLike()">
+            <span id="likeIcon">🤍</span> <span id="likeCount">0</span>
+          </button>
+          <button class="action-btn" onclick="shareGame()">📤 مشاركة</button>
+          <button class="action-btn" onclick="showEmbed()">‹› تضمين</button>
+        </div>
+        <div class="embed-box hidden" id="embedBox">
+          <label>كود التضمين:</label>
+          <textarea id="embedCode" readonly rows="4"></textarea>
+          <button class="btn-ghost small" onclick="copyEmbed()">نسخ الكود</button>
+        </div>
+        <div class="uploader-info">
+          <small>رُفعت بواسطة: <strong id="gmUploader"></strong></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN MODAL ===== -->
+<div class="modal-overlay" id="loginModal" onclick="closeGameModal(event)">
+  <div class="modal auth-modal">
+    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    <div class="auth-logo">⬡ GAMEVAULT</div>
+    <h2>تسجيل الدخول</h2>
+    <div class="form-group">
+      <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" />
+    </div>
+    <div class="form-group">
+      <input type="password" id="loginPassword" placeholder="كلمة المرور" />
+    </div>
+    <button class="btn-primary full" onclick="login()">دخول</button>
+    <div id="loginMsg" class="msg hidden"></div>
+    <p class="auth-switch">ليس لديك حساب؟ <a href="#" onclick="switchModal('loginModal','registerModal')">سجّل الآن</a></p>
+  </div>
+</div>
+
+<!-- ===== REGISTER MODAL ===== -->
+<div class="modal-overlay" id="registerModal" onclick="closeGameModal(event)">
+  <div class="modal auth-modal">
+    <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    <div class="auth-logo">⬡ GAMEVAULT</div>
+    <h2>إنشاء حساب</h2>
+    <div class="form-group">
+      <input type="text" id="regUsername" placeholder="اسم المستخدم" />
+    </div>
+    <div class="form-group">
+      <input type="email" id="regEmail" placeholder="البريد الإلكتروني" />
+    </div>
+    <div class="form-group">
+      <input type="password" id="regPassword" placeholder="كلمة المرور (6 أحرف+)" />
+    </div>
+    <button class="btn-primary full" onclick="register()">إنشاء الحساب</button>
+    <div id="registerMsg" class="msg hidden"></div>
+    <p class="auth-switch">لديك حساب؟ <a href="#" onclick="switchModal('registerModal','loginModal')">سجّل دخولك</a></p>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
