@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ملفي الشخصي — GameVault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="profile-page">
+
+<div class="app-shell">
+
+  <!-- SIDEBAR (same as main) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="index.html" class="logo-link">
+        <span class="logo-hex">⬡</span>
+        <span class="logo-text">GAME<span class="logo-accent">VAULT</span></span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">🎮</span>
+        <span class="nav-label">تصفح الألعاب</span>
+      </a>
+      <a href="index.html#upload" class="nav-item">
+        <span class="nav-icon">⬆</span>
+        <span class="nav-label">ارفع لعبة</span>
+      </a>
+      <button class="nav-item active">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">ملفي الشخصي</span>
+      </button>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-bottom">
+      <div id="sidebarAuth">
+        <button class="btn-outline full-w" onclick="window.location='index.html'">العودة للرئيسية</button>
+      </div>
+      <div id="sidebarUser" class="hidden">
+        <div class="sidebar-user-card active-card">
+          <div class="sidebar-avatar" id="sidebarAvatar"></div>
+          <div class="sidebar-user-info">
+            <span class="sidebar-username" id="sidebarUsername">مستخدم</span>
+            <span class="sidebar-role">لاعب</span>
+          </div>
+        </div>
+        <button class="btn-ghost full-w mt8 small" onclick="logout()">تسجيل الخروج</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <div class="main-panel">
+    <header class="topbar">
+      <button class="topbar-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title">الملف الشخصي</div>
+      <div class="topbar-right">
+        <a href="index.html" class="btn-ghost small">← العودة</a>
+      </div>
+    </header>
+
+    <div class="content-area profile-content">
+
+      <!-- NOT LOGGED IN STATE -->
+      <div id="notLoggedIn" class="empty-fullpage hidden">
+        <div class="empty-icon-big">🔐</div>
+        <h2>يجب تسجيل الدخول أولاً</h2>
+        <p>سجّل دخولك للوصول إلى ملفك الشخصي</p>
+        <a href="index.html" class="btn-primary">العودة للرئيسية</a>
+      </div>
+
+      <!-- PROFILE CONTENT -->
+      <div id="profileContent">
+
+        <!-- PROFILE HEADER BANNER -->
+        <div class="profile-banner">
+          <div class="banner-bg" id="bannerBg"></div>
+          <div class="profile-header-inner">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar-display" id="profileAvatar"></div>
+              <label class="avatar-edit-btn" for="avatarInput" title="تغيير الصورة">✏️</label>
+              <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar(event)" hidden/>
+            </div>
+            <div class="profile-header-info">
+              <h1 id="profileDisplayName">—</h1>
+              <p id="profileDisplayBio" class="profile-display-bio">لا توجد نبذة بعد</p>
+              <div class="profile-stats">
+                <div class="pstat"><span id="statGames">0</span><small>ألعاب</small></div>
+                <div class="pstat"><span id="statLikes">0</span><small>إعجاب</small></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="profile-tabs">
+          <button class="ptab active" data-ptab="info" onclick="switchProfileTab('info',this)">✏️ تعديل المعلومات</button>
+          <button class="ptab" data-ptab="games" onclick="switchProfileTab('games',this)">🎮 ألعابي</button>
+          <button class="ptab" data-ptab="liked" onclick="switchProfileTab('liked',this)">❤️ المفضلة</button>
+        </div>
+
+        <!-- TAB: INFO -->
+        <div id="ptab-info" class="ptab-content active">
+          <div class="profile-form-card">
+            <div class="form-section-title">المعلومات الشخصية</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>اسم المستخدم</label>
+                <input type="text" id="profileUsername" placeholder="اسمك الظاهر"/>
+              </div>
+              <div class="form-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="profileEmail" disabled/>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>رقم الهاتف</label>
+                <input type="tel" id="profilePhone" placeholder="+218..."/>
+              </div>
+              <div class="form-group">
+                <label>تاريخ الانضمام</label>
+                <input type="text" id="profileJoined" disabled/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>نبذة عنك</label>
+              <textarea id="profileBio" rows="4" placeholder="أخبر المجتمع عن نفسك..."></textarea>
+            </div>
+            <div class="profile-form-actions">
+              <button class="btn-primary" onclick="saveProfile()">💾 حفظ التغييرات</button>
+              <div id="profileMsg" class="msg hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: MY GAMES -->
+        <div id="ptab-games" class="ptab-content hidden">
+          <div class="section-header">
+            <h3>ألعابي المرفوعة</h3>
+            <a href="index.html" class="btn-outline small" onclick="localStorage.setItem('openUpload','1')">+ رفع لعبة جديدة</a>
+          </div>
+          <div class="games-grid" id="myGamesGrid">
+            <div class="loader-state"><div class="loader-spinner"></div><span>جاري التحميل...</span></div>
+          </div>
+        </div>
+
+        <!-- TAB: LIKED GAMES -->
+        <div id="ptab-liked" class="ptab-content hidden">
+          <div class="section-header">
+            <h3>الألعاب المفضلة</h3>
+          </div>
+          <div class="games-grid" id="likedGamesGrid">
+            <div class="loader-state"><div class="loader-spinner"></div><span>جاري التحميل...</span></div>
+          </div>
+        </div>
+
+      </div><!-- /profileContent -->
+    </div><!-- /content-area -->
+  </div><!-- /main-panel -->
+</div><!-- /app-shell -->
+
+<!-- GAME MODAL (same as main page) -->
+<div class="modal-overlay" id="gameModal" onclick="overlayClose(event,'gameModal')">
+  <div class="modal game-modal">
+    <button class="modal-close" onclick="closeModal('gameModal')">✕</button>
+    <div class="game-modal-inner">
+      <div class="game-play-area">
+        <iframe id="gameFrame" src="" allowfullscreen></iframe>
+      </div>
+      <div class="game-info-panel">
+        <div class="gip-scroll">
+          <h2 id="gmTitle"></h2>
+          <div class="game-meta-row">
+            <span id="gmEngine" class="badge engine-badge"></span>
+            <span id="gmCategory" class="badge cat-badge"></span>
+          </div>
+          <p id="gmDesc" class="gm-desc"></p>
+          <div class="game-tags" id="gmTags"></div>
+          <div class="game-actions">
+            <button class="action-btn like-btn" id="likeBtn" onclick="toggleLike()">
+              <span id="likeIcon">🤍</span> <span id="likeCount">0</span>
+            </button>
+            <button class="action-btn" onclick="shareGame()">📤 مشاركة</button>
+          </div>
+          <div class="uploader-info"><small>رُفعت بواسطة: <strong id="gmUploader"></strong></small></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+<script>
+  // Profile page specific init
+  window.addEventListener('DOMContentLoaded', async () => {
+    await checkSession();
+    if (!currentUser) {
+      document.getElementById('notLoggedIn').classList.remove('hidden');
+      document.getElementById('profileContent').classList.add('hidden');
+    } else {
+      document.getElementById('profileContent').classList.remove('hidden');
+      await loadProfilePage();
+    }
+  });
+
+  async function loadProfilePage() {
+    if (!currentProfile) return;
+    // Populate display
+    document.getElementById('profileDisplayName').textContent = currentProfile.username || currentUser.email.split('@')[0];
+    document.getElementById('profileDisplayBio').textContent = currentProfile.bio || 'لا توجد نبذة بعد';
+    document.getElementById('profileJoined').value = currentProfile.created_at ? new Date(currentProfile.created_at).toLocaleDateString('ar') : '';
+    // Load stats
+    const { data: gamesData } = await sb.from('games').select('id, likes_count').eq('uploader_id', currentUser.id);
+    document.getElementById('statGames').textContent = gamesData?.length || 0;
+    const totalLikes = gamesData?.reduce((s,g) => s + (g.likes_count||0), 0) || 0;
+    document.getElementById('statLikes').textContent = totalLikes;
+    // Load my games by default
+    await loadMyGamesPage();
+    await loadLikedGamesPage();
+  }
+
+  async function loadMyGamesPage() {
+    const grid = document.getElementById('myGamesGrid');
+    const { data } = await sb.from('games').select('*').eq('uploader_id', currentUser.id).order('created_at', { ascending: false });
+    if (!data || data.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>لم ترفع ألعاباً بعد</p></div>`;
+      return;
+    }
+    grid.innerHTML = data.map(g => gameCardHTML(g, true)).join('');
+  }
+
+  async function loadLikedGamesPage() {
+    const grid = document.getElementById('likedGamesGrid');
+    const { data: likes } = await sb.from('game_likes').select('game_id').eq('user_id', currentUser.id);
+    if (!likes || likes.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🤍</div><p>لم تعجب بأي لعبة بعد</p></div>`;
+      return;
+    }
+    const ids = likes.map(l => l.game_id);
+    const { data } = await sb.from('games').select('*').in('id', ids);
+    likedGames = new Set(ids);
+    if (!data || data.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🤍</div><p>لا توجد ألعاب</p></div>`;
+      return;
+    }
+    grid.innerHTML = data.map(g => gameCardHTML(g)).join('');
+  }
+
+  function switchProfileTab(tab, btn) {
+    document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.ptab-content').forEach(c => c.classList.add('hidden'));
+    btn.classList.add('active');
+    document.getElementById(`ptab-${tab}`).classList.remove('hidden');
+  }
+
+  function goToProfile() { /* already here */ }
+</script>
+</body>
+</html>
