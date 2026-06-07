@@ -11,8 +11,10 @@ let currentProfile = null;
 let currentGame = null;
 let seoEnabled = true;
 let likedGames = new Set();
-let uploadedGameUrl = null;   // blob URL from file/zip
 let uploadedThumbUrl = null;  // blob URL for thumbnail
+// pendingUpload holds all files ready to be uploaded to Supabase Storage
+// { files: [{path, blob, mime}], indexPath: 'index.html' }
+let pendingUpload = null;
 let currentCategory = '';
 
 // ===== INIT =====
@@ -188,14 +190,30 @@ async function loadGames() {
   const engine = document.getElementById('filterEngine')?.value || '';
   const sort   = document.getElementById('filterSort')?.value || 'created_at';
 
-  let q = sb.from('games').select(`*, profiles:uploader_id(username, avatar_url)`)
+  let q = sb.from('games').select('*')
             .order(sort === 'likes' ? 'likes_count' : 'created_at', { ascending: false });
 
   if (engine) q = q.eq('engine', engine);
   if (currentCategory) q = q.eq('category', currentCategory);
 
   const { data, error } = await q.limit(60);
-  if (error) { grid.innerHTML = `<div class="loader-state">خطأ في التحميل</div>`; return; }
+  if (error) {
+    console.error('loadGames error:', error);
+    grid.innerHTML = `<div class="loader-state" style="flex-direction:column;gap:8px">
+      <span>❌ خطأ في التحميل</span>
+      <small style="opacity:.7;font-size:.75rem">${error.message}</small>
+    </div>`;
+    return;
+  }
+
+  // جلب أسماء الرافعين دفعة واحدة
+  if (data && data.length > 0) {
+    const uploaderIds = [...new Set(data.map(g => g.uploader_id).filter(Boolean))];
+    const { data: profData } = await sb.from('profiles').select('id, username, avatar_url').in('id', uploaderIds);
+    const profMap = {};
+    (profData || []).forEach(p => { profMap[p.id] = p; });
+    data.forEach(g => { g.profiles = profMap[g.uploader_id] || null; });
+  }
 
   const count = document.getElementById('gameCount');
   if (count) count.textContent = `${data?.length || 0} لعبة`;
@@ -288,159 +306,223 @@ function handleFileSelect(e) {
   }
 }
 
+// ===== MIME HELPER =====
+function guessMime(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const map = {
+    html:'text/html', htm:'text/html',
+    js:'application/javascript', mjs:'application/javascript',
+    css:'text/css',
+    png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg',
+    gif:'image/gif', webp:'image/webp', svg:'image/svg+xml',
+    ico:'image/x-icon', bmp:'image/bmp',
+    wasm:'application/wasm',
+    json:'application/json', xml:'application/xml',
+    mp3:'audio/mpeg', ogg:'audio/ogg', wav:'audio/wav',
+    mp4:'video/mp4', webm:'video/webm',
+    ttf:'font/ttf', woff:'font/woff', woff2:'font/woff2',
+    data:'application/octet-stream', mem:'application/octet-stream',
+    unity3d:'application/octet-stream', unityweb:'application/octet-stream',
+    pck:'application/octet-stream',
+  };
+  return map[ext] || 'application/octet-stream';
+}
+
+// ===== FILE PROCESSING — stores files in pendingUpload for later Supabase upload =====
+
 async function processFiles(files) {
   const file = files[0];
   const name = file.name.toLowerCase();
-  const status = document.getElementById('fileStatus');
-  status.className = 'file-status';
 
   if (name.endsWith('.zip')) {
-    status.textContent = '📦 جاري فك ضغط الأرشيف...';
-    status.classList.remove('hidden');
+    setStatus('loading', '📦 جاري فك ضغط الأرشيف...');
     await extractZip(file);
   } else if (name.endsWith('.html') || name.endsWith('.htm')) {
-    // Single HTML file
-    const url = URL.createObjectURL(file);
-    processedGameUrl = url;
-    uploadedGameUrl  = url;
-    setStatus('success', `✓ تم اكتشاف ملف HTML: ${file.name}`);
-    // Auto-fill title from filename
-    const title = document.getElementById('gameTitle');
-    if (title && !title.value) title.value = file.name.replace(/\.html?$/i,'');
+    // Read as UTF-8 text, inject charset meta if missing, re-encode as UTF-8 blob
+    const text = await readFileAsUTF8(file);
+    const fixedHtml = ensureUtf8Meta(text);
+    const blob = new Blob([fixedHtml], { type: 'text/html; charset=utf-8' });
+    pendingUpload = { files: [{ path: 'index.html', blob, mime: 'text/html; charset=utf-8' }], indexPath: 'index.html' };
+    processedGameUrl = 'pending';
+    setStatus('success', `✓ ملف HTML جاهز للرفع: ${file.name}`);
+    const titleEl = document.getElementById('gameTitle');
+    if (titleEl && !titleEl.value) titleEl.value = file.name.replace(/\.html?$/i, '');
   } else {
-    setStatus('error', '⚠ صيغة غير مدعومة. استخدم: .html أو .zip');
+    setStatus('error', '⚠ صيغة غير مدعومة. استخدم: .html أو .zip أو مجلد');
   }
+}
+
+// ===== UTF-8 HELPERS =====
+function readFileAsUTF8(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result);
+    reader.onerror = () => reject(new Error('فشل قراءة الملف'));
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+function ensureUtf8Meta(html) {
+  // If <meta charset> already exists, make sure it says UTF-8
+  if (/<meta[^>]+charset/i.test(html)) {
+    return html.replace(/<meta[^>]+charset=[^"'>]*["']?/i, '<meta charset="UTF-8"');
+  }
+  // Inject <meta charset> right after <head> or at very start
+  if (/<head[^>]*>/i.test(html)) {
+    return html.replace(/(<head[^>]*>)/i, '$1\n  <meta charset="UTF-8"/>');
+  }
+  // No <head> tag — inject before anything else
+  return '<meta charset="UTF-8"/>\n' + html;
 }
 
 async function extractZip(file) {
   try {
     const JSZip = window.JSZip;
-    if (!JSZip) {
-      setStatus('error', '⚠ مكتبة JSZip غير محملة. استخدم رابط URL بدلاً من ذلك.');
-      return;
-    }
+    if (!JSZip) { setStatus('error', '⚠ مكتبة JSZip غير محملة'); return; }
+
     const zip = await JSZip.loadAsync(file);
-    const fileNames = Object.keys(zip.files);
+    const fileNames = Object.keys(zip.files).filter(n => !zip.files[n].dir);
 
-    // Find index.html (try root first, then subdirectories)
-    let indexEntry = null;
-    let indexPath  = null;
-
-    // Root level
-    if (zip.files['index.html']) { indexEntry = zip.files['index.html']; indexPath = 'index.html'; }
-    if (!indexEntry && zip.files['index.htm']) { indexEntry = zip.files['index.htm']; indexPath = 'index.htm'; }
-
-    // Search subdirectories
-    if (!indexEntry) {
-      for (const name of fileNames) {
-        if ((name.endsWith('/index.html') || name.endsWith('/index.htm')) && !zip.files[name].dir) {
-          indexEntry = zip.files[name]; indexPath = name; break;
-        }
+    // Find index.html — root first, then any subfolder
+    let indexPath = null;
+    if (zip.files['index.html']) indexPath = 'index.html';
+    else if (zip.files['index.htm']) indexPath = 'index.htm';
+    else {
+      for (const n of fileNames) {
+        if (n.endsWith('/index.html') || n.endsWith('/index.htm')) { indexPath = n; break; }
       }
     }
+    if (!indexPath) { setStatus('error', '⚠ لم يتم العثور على index.html داخل الأرشيف'); return; }
 
-    if (!indexEntry) {
-      setStatus('error', '⚠ لم يتم العثور على index.html داخل الأرشيف');
-      return;
-    }
-
-    // Build a virtual filesystem in memory using blob URLs
-    const fileMap = {};
-    for (const name of fileNames) {
-      if (zip.files[name].dir) continue;
-      const blob = await zip.files[name].async('blob');
-      const mime = guessMime(name);
-      fileMap[name] = URL.createObjectURL(new Blob([blob], { type: mime }));
-    }
-
-    // Rewrite index.html to point to local blobs
-    const htmlContent = await indexEntry.async('string');
+    // Detect base dir (e.g. "mygame/") to strip it from paths
     const baseDir = indexPath.includes('/') ? indexPath.substring(0, indexPath.lastIndexOf('/') + 1) : '';
-    const rewritten = rewriteHtml(htmlContent, baseDir, fileMap);
-    const htmlBlob  = new Blob([rewritten], { type: 'text/html' });
-    const htmlUrl   = URL.createObjectURL(htmlBlob);
 
-    processedGameUrl = htmlUrl;
-    uploadedGameUrl  = htmlUrl;
+    // Extract all files into pendingUpload
+    const uploadFiles = [];
+    let loaded = 0;
+    for (const name of fileNames) {
+      const arrayBuf = await zip.files[name].async('arraybuffer');
+      let mime = guessMime(name);
+      // Strip baseDir prefix so paths are relative to root
+      const storagePath = baseDir && name.startsWith(baseDir) ? name.slice(baseDir.length) : name;
+      if (!storagePath) continue; // skip the root folder entry itself
 
-    const fileCount = fileNames.filter(n => !zip.files[n].dir).length;
-    setStatus('success', `✓ تم فك الضغط بنجاح! ${fileCount} ملف — index.html: ${indexPath}`);
+      let blob;
+      // Fix UTF-8 encoding for HTML files
+      if (name.endsWith('.html') || name.endsWith('.htm')) {
+        const text = new TextDecoder('utf-8').decode(arrayBuf);
+        const fixedHtml = ensureUtf8Meta(text);
+        mime = 'text/html; charset=utf-8';
+        blob = new Blob([fixedHtml], { type: mime });
+      } else {
+        blob = new Blob([arrayBuf], { type: mime });
+      }
 
-    const title = document.getElementById('gameTitle');
-    if (title && !title.value) title.value = file.name.replace(/\.zip$/i,'');
+      uploadFiles.push({ path: storagePath, blob, mime });
+      loaded++;
+      setStatus('loading', `📦 جاري قراءة الملفات... ${loaded}/${fileNames.length}`);
+    }
+
+    const newIndexPath = baseDir ? indexPath.slice(baseDir.length) : indexPath;
+    pendingUpload = { files: uploadFiles, indexPath: newIndexPath };
+    processedGameUrl = 'pending';
+
+    setStatus('success', `✓ جاهز للرفع: ${uploadFiles.length} ملف — نقطة البداية: ${newIndexPath}`);
+    const titleEl = document.getElementById('gameTitle');
+    if (titleEl && !titleEl.value) titleEl.value = file.name.replace(/\.zip$/i, '');
 
   } catch (err) {
     setStatus('error', '⚠ خطأ في فك الضغط: ' + err.message);
   }
 }
 
-function rewriteHtml(html, baseDir, fileMap) {
-  // Replace relative references in src, href, url() with blob URLs
-  return html.replace(/(src|href)=["']([^"']+)["']/gi, (match, attr, val) => {
-    if (val.startsWith('http') || val.startsWith('//') || val.startsWith('data:')) return match;
-    const key = baseDir + val;
-    if (fileMap[key]) return `${attr}="${fileMap[key]}"`;
-    if (fileMap[val]) return `${attr}="${fileMap[val]}"`;
-    return match;
-  });
-}
+async function processFolderFiles(files) {
+  // files = File[] from folder select or drag-drop, with webkitRelativePath
+  setStatus('loading', `📁 جاري قراءة المجلد (${files.length} ملف)...`);
 
-function guessMime(name) {
-  const ext = name.split('.').pop().toLowerCase();
-  const map = { html:'text/html', htm:'text/html', js:'application/javascript', css:'text/css',
-    png:'image/png', jpg:'image/jpeg', jpeg:'image/jpeg', gif:'image/gif', webp:'image/webp',
-    svg:'image/svg+xml', wasm:'application/wasm', json:'application/json',
-    mp3:'audio/mpeg', ogg:'audio/ogg', wav:'audio/wav', mp4:'video/mp4' };
-  return map[ext] || 'application/octet-stream';
-}
-
-function processFolderFiles(files) {
-  // Find index.html among dropped folder files
-  const htmlFile = files.find(f => f.name === 'index.html' || f.name === 'index.htm')
-                || files.find(f => f.name.endsWith('.html') || f.name.endsWith('.htm'));
-  if (!htmlFile) {
-    setStatus('error', '⚠ لم يتم العثور على index.html في المجلد');
-    return;
-  }
-  // Create object URLs for all files
-  const urlMap = {};
-  files.forEach(f => { urlMap[f.name] = URL.createObjectURL(f); });
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const rewritten = rewriteHtml(e.target.result, '', urlMap);
-    const blob = new Blob([rewritten], { type: 'text/html' });
-    const url  = URL.createObjectURL(blob);
-    processedGameUrl = url;
-    uploadedGameUrl  = url;
-    setStatus('success', `✓ تم تحميل المجلد: ${files.length} ملف — index: ${htmlFile.name}`);
-    const title = document.getElementById('gameTitle');
-    if (title && !title.value) {
-      const rel = htmlFile.webkitRelativePath || htmlFile.name;
-      title.value = rel.split('/')[0] || 'لعبتي';
+  // Find index.html — prefer root-level, then any sub-path
+  let indexFile = null;
+  let indexRelPath = null;
+  for (const f of files) {
+    const rel = f.webkitRelativePath || f.name;
+    const parts = rel.split('/');
+    // root-level = parts.length === 2 (folder/file)
+    if ((f.name === 'index.html' || f.name === 'index.htm') && parts.length === 2) {
+      indexFile = f; indexRelPath = rel; break;
     }
-  };
-  reader.readAsText(htmlFile);
+  }
+  // fallback: any index.html anywhere
+  if (!indexFile) {
+    for (const f of files) {
+      if (f.name === 'index.html' || f.name === 'index.htm') {
+        indexFile = f; indexRelPath = f.webkitRelativePath || f.name; break;
+      }
+    }
+  }
+  if (!indexFile) { setStatus('error', '⚠ لم يتم العثور على index.html في المجلد'); return; }
+
+  // BaseDir = top-level folder name + '/'  e.g. "mygame/"
+  const topFolder = (indexRelPath.includes('/') ? indexRelPath.split('/')[0] : '') + '/';
+  const uploadFiles = [];
+  let loaded = 0;
+  for (const f of files) {
+    const rel = f.webkitRelativePath || f.name;
+    // Strip top-level folder to get storage path
+    const storagePath = rel.startsWith(topFolder) ? rel.slice(topFolder.length) : rel;
+    if (!storagePath) continue;
+    const arrayBuf = await f.arrayBuffer();
+    let mime = guessMime(f.name);
+    let blob;
+    // Fix UTF-8 encoding for HTML files
+    if (f.name.endsWith('.html') || f.name.endsWith('.htm')) {
+      const text = new TextDecoder('utf-8').decode(arrayBuf);
+      const fixedHtml = ensureUtf8Meta(text);
+      mime = 'text/html; charset=utf-8';
+      blob = new Blob([fixedHtml], { type: mime });
+    } else {
+      blob = new Blob([arrayBuf], { type: mime });
+    }
+    uploadFiles.push({ path: storagePath, blob, mime });
+    loaded++;
+    if (loaded % 10 === 0) setStatus('loading', `📁 جاري القراءة... ${loaded}/${files.length}`);
+  }
+
+  const newIndexPath = (indexRelPath.startsWith(topFolder) ? indexRelPath.slice(topFolder.length) : indexRelPath);
+  pendingUpload = { files: uploadFiles, indexPath: newIndexPath };
+  processedGameUrl = 'pending';
+
+  setStatus('success', `✓ المجلد جاهز للرفع: ${uploadFiles.length} ملف — نقطة البداية: ${newIndexPath}`);
+  const titleEl = document.getElementById('gameTitle');
+  if (titleEl && !titleEl.value) titleEl.value = topFolder.replace(/\/$/, '') || 'لعبتي';
 }
 
 async function readFolderEntry(dirEntry) {
-  // WebkitEntry API for dropped folders
   const allFiles = [];
-  await collectEntries(dirEntry, allFiles);
+  await collectEntries(dirEntry, '', allFiles);
   if (allFiles.length === 0) { setStatus('error', '⚠ المجلد فارغ'); return; }
-  processFolderFiles(allFiles);
+  await processFolderFiles(allFiles);
 }
 
-function collectEntries(entry, result) {
+function collectEntries(entry, pathPrefix, result) {
   return new Promise(resolve => {
     if (entry.isFile) {
-      entry.file(f => { result.push(f); resolve(); });
-    } else if (entry.isDirectory) {
-      const reader = entry.createReader();
-      reader.readEntries(async entries => {
-        for (const e of entries) await collectEntries(e, result);
+      entry.file(f => {
+        // Attach relative path manually since dropped entries lose webkitRelativePath
+        Object.defineProperty(f, 'webkitRelativePath', { value: pathPrefix + f.name });
+        result.push(f);
         resolve();
       });
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      // readEntries may return in chunks — keep reading until empty
+      const readAll = (cb) => {
+        reader.readEntries(async entries => {
+          if (entries.length === 0) { cb(); return; }
+          for (const e of entries) await collectEntries(e, pathPrefix + entry.name + '/', result);
+          readAll(cb);
+        });
+      };
+      readAll(resolve);
     } else resolve();
   });
 }
@@ -450,6 +532,7 @@ function setStatus(type, msg) {
   if (!s) return;
   s.textContent = msg;
   s.className = `file-status ${type}`;
+  s.classList.remove('hidden');
 }
 
 // ===== UPLOAD MODE SWITCH =====
@@ -458,8 +541,7 @@ function switchUploadMode(mode, btn) {
   btn.classList.add('active');
   document.getElementById('uploadModeFile').classList.toggle('hidden', mode !== 'file');
   document.getElementById('uploadModeUrl').classList.toggle('hidden', mode !== 'url');
-  if (mode === 'file') processedGameUrl = uploadedGameUrl;
-  else processedGameUrl = null;
+  if (mode === 'url') { pendingUpload = null; processedGameUrl = null; }
 }
 
 // ===== THUMBNAIL =====
@@ -492,50 +574,103 @@ async function uploadGame() {
   const category    = getVal('gameCategory');
   const rawTags     = getVal('gameTags').trim();
 
-  // Determine game URL
   const urlMode = document.querySelector('.umode-tab.active')?.dataset.mode === 'url';
-  let gameUrl = urlMode ? getVal('gameUrl').trim() : (processedGameUrl || '');
+  let gameUrl   = urlMode ? getVal('gameUrl').trim() : null;
 
-  // Thumbnail
-  const thumbnail = uploadedThumbUrl || getVal('gameThumbnail').trim() || null;
+  let thumbnailUrl = getVal('gameThumbnail').trim() || null;
 
   if (!title || !description) return showMsg('uploadMsg','يرجى ملء الحقول المطلوبة *','error');
-  if (!gameUrl) return showMsg('uploadMsg','يرجى رفع ملف اللعبة أو إدخال رابط *','error');
+  if (!urlMode && !pendingUpload) return showMsg('uploadMsg','يرجى رفع ملف أو مجلد اللعبة أولاً','error');
+  if (urlMode && !gameUrl) return showMsg('uploadMsg','يرجى إدخال رابط اللعبة','error');
 
-  // If local blob URL, we need to use it as-is (only works in same session)
-  // For production you'd upload to Supabase Storage instead
-  if (gameUrl.startsWith('blob:')) {
-    showMsg('uploadMsg','ملاحظة: روابط blob تعمل فقط في هذه الجلسة. للنشر الدائم استخدم رابط URL.','error');
-    // Still allow saving for demo purposes
-    gameUrl = gameUrl; // keep it for now
-  }
-
-  const tags  = rawTags ? rawTags.split(',').map(t => t.trim()).filter(Boolean) : [];
-  const slug  = slugify(title);
+  const tags = rawTags ? rawTags.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const slug = slugify(title);
+  const uid  = currentUser.id;
+  const ts   = Date.now();
+  const gameFolder = `${uid}/${ts}`;
 
   const btn = document.querySelector('#section-upload .btn-primary.full-w');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري الرفع...'; }
 
-  const { data, error } = await sb.from('games').insert({
-    title, description, engine, category,
-    tags, game_url: gameUrl,
-    thumbnail_url: thumbnail,
-    uploader_id: currentUser.id,
-    seo_enabled: seoEnabled,
-    slug, likes_count: 0,
-    created_at: new Date().toISOString()
-  }).select().single();
+  try {
 
-  if (btn) { btn.disabled = false; btn.textContent = '🚀 نشر اللعبة'; }
-  if (error) return showMsg('uploadMsg','خطأ: ' + error.message,'error');
+    // ── 1. رفع ملفات اللعبة ──
+    if (!urlMode && pendingUpload) {
+      const total = pendingUpload.files.length;
+      const isSingleHtml = total === 1 && (
+        pendingUpload.indexPath === 'index.html' || pendingUpload.indexPath === 'index.htm'
+      );
 
-  if (seoEnabled && data) await generateSEOMeta(data);
+      if (isSingleHtml) {
+        // ملف HTML منفرد: نحوّله إلى data URL مباشرةً — لا حاجة لـ Storage
+        showMsg('uploadMsg', '⚙️ جاري معالجة الملف...', 'success');
+        const htmlText = await pendingUpload.files[0].blob.text();
+        // data URL يعمل مباشرة في iframe بدون قيود CORS أو Content-Type
+        gameUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(htmlText);
+      } else {
+        // مجلد أو ZIP متعدد الملفات: ارفع إلى Storage كالمعتاد
+        let done = 0;
+        for (const f of pendingUpload.files) {
+          const storagePath = `${gameFolder}/${f.path}`;
+          const { error: upErr } = await sb.storage.from('games').upload(
+            storagePath, f.blob,
+            { contentType: f.mime, upsert: true }
+          );
+          if (upErr) throw new Error(`فشل رفع ${f.path}: ${upErr.message}`);
+          done++;
+          showMsg('uploadMsg', `⏫ جاري الرفع... ${done}/${total} ملف`, 'success');
+          if (btn) btn.textContent = `⏳ ${Math.round(done/total*100)}%`;
+        }
+        // بناء رابط index.html الدائم
+        const { data: urlData } = sb.storage.from('games').getPublicUrl(`${gameFolder}/${pendingUpload.indexPath}`);
+        gameUrl = urlData.publicUrl;
+      }
+    }
 
-  showMsg('uploadMsg',`🎉 تم نشر "${title}" بنجاح!`,'success');
-  clearUploadForm();
-  await loadGames();
-  showToast('تم نشر اللعبة! 🚀');
-  setTimeout(() => showSection('browse'), 1800);
+    // ── 2. رفع الصورة المصغرة ──
+    if (uploadedThumbUrl && uploadedThumbUrl.startsWith('blob:')) {
+      showMsg('uploadMsg', '⏫ جاري رفع الصورة المصغرة...', 'success');
+      const resp = await fetch(uploadedThumbUrl);
+      const blob = await resp.blob();
+      const ext  = blob.type.split('/')[1] || 'jpg';
+      const path = `${uid}/${ts}.${ext}`;
+      const { error: thErr } = await sb.storage.from('thumbnails').upload(path, blob, {
+        contentType: blob.type, upsert: true
+      });
+      if (thErr) throw new Error('فشل رفع الصورة: ' + thErr.message);
+      const { data: thUrl } = sb.storage.from('thumbnails').getPublicUrl(path);
+      thumbnailUrl = thUrl.publicUrl;
+    } else if (uploadedThumbUrl) {
+      thumbnailUrl = uploadedThumbUrl;
+    }
+
+    // ── 3. حفظ اللعبة في قاعدة البيانات ──
+    showMsg('uploadMsg', '💾 جاري الحفظ...', 'success');
+    const { data, error } = await sb.from('games').insert({
+      title, description, engine, category,
+      tags, game_url: gameUrl,
+      thumbnail_url: thumbnailUrl,
+      uploader_id: uid,
+      seo_enabled: seoEnabled,
+      slug, likes_count: 0,
+      created_at: new Date().toISOString()
+    }).select().single();
+
+    if (error) throw new Error(error.message);
+    if (seoEnabled && data) await generateSEOMeta(data);
+
+    pendingUpload = null;
+    showMsg('uploadMsg', `🎉 تم نشر "${title}" بنجاح!`, 'success');
+    clearUploadForm();
+    await loadGames();
+    showToast('تم نشر اللعبة! 🚀');
+    setTimeout(() => showSection('browse'), 1800);
+
+  } catch (err) {
+    showMsg('uploadMsg', 'خطأ: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🚀 نشر اللعبة'; }
+  }
 }
 
 async function generateSEOMeta(game) {
@@ -557,9 +692,58 @@ async function deleteGame(e, id) {
 }
 
 // ===== GAME MODAL =====
+// ===== LOAD GAME IN FRAME =====
+// يجلب HTML ويضعه في srcdoc مباشرة — يحل مشكلة Supabase Content-Type
+async function loadGameInFrame(frame, gameUrl) {
+  if (!gameUrl) return;
+
+  // data URL من رفع جديد
+  if (gameUrl.startsWith('data:text/html')) {
+    const html = decodeURIComponent(gameUrl.split(',').slice(1).join(','));
+    frame.removeAttribute('src');
+    frame.srcdoc = html;
+    return;
+  }
+
+  // رابط Supabase Storage أو أي رابط HTML — نجلبه ونضعه في srcdoc
+  if (
+    gameUrl.includes('supabase.co/storage') ||
+    gameUrl.endsWith('.html') ||
+    gameUrl.endsWith('.htm')
+  ) {
+    try {
+      const resp = await fetch(gameUrl);
+      if (resp.ok) {
+        const html = await resp.text();
+        const fixed = ensureUtf8Meta(html);
+        frame.removeAttribute('src');
+        frame.srcdoc = fixed;
+        return;
+      }
+    } catch(e) {
+      // إذا فشل fetch (CORS) نفتح في تبويب جديد تلقائياً
+      console.warn('fetch failed, opening new tab:', e);
+      window.open(gameUrl, '_blank', 'noopener');
+      return;
+    }
+  }
+
+  // روابط أخرى (Unity, Godot, iframe خارجي)
+  frame.removeAttribute('srcdoc');
+  frame.src = gameUrl;
+}
+
 async function openGame(id) {
-  const { data: g, error } = await sb.from('games').select(`*, profiles:uploader_id(username)`).eq('id', id).single();
-  if (error || !g) return showToast('تعذر تحميل اللعبة');
+  const { data: g, error } = await sb.from('games').select('*').eq('id', id).single();
+  if (error || !g) {
+    console.error('openGame error:', error);
+    return showToast('تعذر تحميل اللعبة: ' + (error?.message || 'غير معروف'));
+  }
+  // جلب اسم الرافع
+  if (g.uploader_id) {
+    const { data: prof } = await sb.from('profiles').select('username').eq('id', g.uploader_id).single();
+    g.profiles = prof || null;
+  }
   currentGame = g;
 
   document.getElementById('gmTitle').textContent    = g.title;
@@ -572,7 +756,10 @@ async function openGame(id) {
   const tagsEl = document.getElementById('gmTags');
   tagsEl.innerHTML = (g.tags || []).map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
 
-  document.getElementById('gameFrame').src = g.game_url;
+  // تحميل اللعبة في iframe
+  const frame = document.getElementById('gameFrame');
+  const gameUrl = g.game_url || '';
+  await loadGameInFrame(frame, gameUrl);
 
   const liked = likedGames.has(id);
   document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
@@ -622,6 +809,89 @@ function shareGame() {
   if (navigator.share) navigator.share({ title: currentGame?.title, url });
   else { navigator.clipboard.writeText(url); showToast('تم نسخ الرابط 📋'); }
 }
+
+// ===== GAME VIEW CONTROLS =====
+let isGameFullscreen = false;
+
+function toggleGameFullscreen() {
+  const modalBox  = document.getElementById('gameModalBox');
+  const infoPanel = document.getElementById('gameInfoPanel');
+  const icon      = document.getElementById('fullscreenIcon');
+  if (!modalBox) return;
+
+  isGameFullscreen = !isGameFullscreen;
+
+  if (isGameFullscreen) {
+    modalBox.classList.add('game-modal-fullscreen');
+    if (infoPanel) infoPanel.classList.add('hidden');
+    icon.textContent = '⊡';
+    showToast('وضع الشاشة الكاملة — اضغط مجدداً للخروج');
+  } else {
+    modalBox.classList.remove('game-modal-fullscreen');
+    if (infoPanel) infoPanel.classList.remove('hidden');
+    icon.textContent = '⛶';
+    showToast('وضع النافذة');
+  }
+}
+
+async function openGameNewTab() {
+  if (!currentGame?.game_url) return;
+  const url = currentGame.game_url;
+
+  // data URL (رفع جديد)
+  if (url.startsWith('data:text/html')) {
+    const html = decodeURIComponent(url.split(',').slice(1).join(','));
+    openHtmlInNewTab(html);
+    return;
+  }
+
+  // رابط Supabase Storage — نجلب HTML ونفتحه كـ Blob
+  if (url.includes('supabase.co/storage') || url.endsWith('.html') || url.endsWith('.htm')) {
+    try {
+      const resp = await fetch(url);
+      if (resp.ok) {
+        const html = await resp.text();
+        openHtmlInNewTab(ensureUtf8Meta(html));
+        return;
+      }
+    } catch(e) { /* fallback below */ }
+  }
+
+  window.open(url, '_blank', 'noopener');
+}
+
+function openHtmlInNewTab(html) {
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  const blobUrl = URL.createObjectURL(blob);
+  window.open(blobUrl, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
+}
+
+async function reloadFrame() {
+  const frame = document.getElementById('gameFrame');
+  if (!frame || !currentGame?.game_url) return;
+  frame.srcdoc = '';
+  frame.src = '';
+  showToast('🔄 جاري إعادة التحميل...');
+  setTimeout(() => loadGameInFrame(frame, currentGame.game_url), 200);
+}
+
+// Hide black-screen notice after iframe loads successfully
+document.addEventListener('DOMContentLoaded', () => {
+  const frame = document.getElementById('gameFrame');
+  if (frame) {
+    frame.addEventListener('load', () => {
+      const notice = document.getElementById('gameBlackNotice');
+      if (notice && frame.src && frame.src !== window.location.href) {
+        setTimeout(() => {
+          notice.style.transition = 'opacity 0.4s';
+          notice.style.opacity = '0';
+          setTimeout(() => { notice.style.display = 'none'; }, 400);
+        }, 1500);
+      }
+    });
+  }
+});
 function showEmbed() { document.getElementById('embedBox')?.classList.toggle('hidden'); }
 function copyEmbed() {
   const ta = document.getElementById('embedCode');
@@ -636,7 +906,7 @@ async function performSearch() {
   const grid = document.getElementById('gamesGrid');
   if (!grid) return;
   grid.innerHTML = `<div class="loader-state"><div class="loader-spinner"></div><span>جاري البحث...</span></div>`;
-  const { data } = await sb.from('games').select(`*, profiles:uploader_id(username, avatar_url)`)
+  const { data } = await sb.from('games').select('*')
     .or(`title.ilike.%${q}%,description.ilike.%${q}%`).order('created_at', { ascending: false });
   if (!data || data.length === 0) {
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>لا نتائج لـ "${escHtml(q)}"</p></div>`;
@@ -692,8 +962,21 @@ function closeModal(id) {
   document.getElementById(id)?.classList.remove('open');
   if (id === 'gameModal') {
     const f = document.getElementById('gameFrame');
-    if (f) f.src = '';
+    if (f) { f.src = ''; f.srcdoc = ''; }
     document.title = 'GameVault — منصة الألعاب';
+    // Reset fullscreen state
+    if (isGameFullscreen) {
+      const modalBox  = document.getElementById('gameModalBox');
+      const infoPanel = document.getElementById('gameInfoPanel');
+      const icon      = document.getElementById('fullscreenIcon');
+      if (modalBox)  modalBox.classList.remove('game-modal-fullscreen');
+      if (infoPanel) infoPanel.classList.remove('hidden');
+      if (icon)      icon.textContent = '⛶';
+      isGameFullscreen = false;
+    }
+    // Reset black-screen notice
+    const notice = document.getElementById('gameBlackNotice');
+    if (notice) { notice.style.opacity = '1'; notice.style.display = ''; }
   }
 }
 function overlayClose(e, id) {
@@ -728,7 +1011,7 @@ function engineEmoji(eng) {
 }
 function clearUploadForm() {
   ['gameTitle','gameDesc','gameTags','gameUrl','gameThumbnail'].forEach(id => setVal(id,''));
-  processedGameUrl = null; uploadedGameUrl = null; uploadedThumbUrl = null;
+  processedGameUrl = null; uploadedThumbUrl = null; pendingUpload = null;
   const prev = document.getElementById('thumbPreview');
   if (prev) prev.innerHTML = '<span>🖼</span><p>لا توجد صورة</p>';
   const fs = document.getElementById('fileStatus');
