@@ -653,6 +653,11 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   padding: 20px;
 }
 .modal-overlay.open { display: flex; animation: fadeIn 0.15s ease; }
+/* عندما تكون اللعبة في وضع الشاشة الكاملة — لا padding للـ overlay */
+.modal-overlay:has(.game-modal-fullscreen) {
+  padding: 0 !important;
+  background: #000;
+}
 .modal {
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
@@ -698,9 +703,87 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   padding: 0;
   overflow: hidden;
 }
-.game-modal-inner { display: flex; height: 80vh; }
+
+/* شريط التحكم */
+.game-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  flex-shrink: 0;
+}
+.game-controls-left,
+.game-controls-right {
+  display: flex;
+  gap: 6px;
+}
+.ctrl-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.ctrl-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.ctrl-view-toggle {
+  background: rgba(29,185,84,0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ctrl-view-toggle:hover {
+  background: rgba(29,185,84,0.2);
+  color: var(--accent);
+}
+
+.game-modal-inner { display: flex; height: 78vh; }
 .game-play-area { flex: 1; background: #000; }
 .game-play-area iframe { width: 100%; height: 100%; border: none; }
+
+/* وضع الشاشة الكاملة — اللعبة تملأ الشاشة بالكامل */
+.game-modal-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  display: flex;
+  flex-direction: column;
+}
+.game-modal-fullscreen .modal-close {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  right: auto;
+  z-index: 9999;
+}
+.game-modal-fullscreen .game-controls-bar {
+  flex-shrink: 0;
+}
+.game-modal-fullscreen .game-modal-inner {
+  flex: 1;
+  height: 0; /* يتمدد عبر flex */
+}
+.game-modal-fullscreen .game-info-panel {
+  display: none !important;
+}
 .game-info-panel {
   width: 320px;
   flex-shrink: 0;
@@ -887,8 +970,10 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   .topbar-menu-btn { display: flex; align-items: center; }
   .hero-cards { display: none; }
   .game-modal-inner { flex-direction: column; height: auto; max-height: 90vh; }
-  .game-play-area { height: 50vh; }
-  .game-info-panel { width: 100%; border-right: none; border-top: 1px solid var(--border); max-height: 40vh; }
+  .game-play-area { height: 45vh; }
+  .game-info-panel { width: 100%; border-right: none; border-top: 1px solid var(--border); max-height: 35vh; }
+  .game-controls-bar { flex-wrap: wrap; }
+  .ctrl-btn { font-size: 0.72rem; padding: 5px 9px; }
   .content-area { padding: 0 16px 60px; }
   .profile-banner { padding: 32px 20px 24px; }
   .ptab-content { padding: 24px 20px 40px; }
