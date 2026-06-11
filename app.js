@@ -705,12 +705,8 @@ async function loadGameInFrame(frame, gameUrl) {
     return;
   }
 
-  // رابط Supabase Storage أو أي رابط HTML — نجلبه ونضعه في srcdoc
-  if (
-    gameUrl.includes('supabase.co/storage') ||
-    gameUrl.endsWith('.html') ||
-    gameUrl.endsWith('.htm')
-  ) {
+  // رابط Supabase Storage — نجلبه ونضعه في srcdoc (نفس الأصل، لا CORS)
+  if (gameUrl.includes('supabase.co/storage')) {
     try {
       const resp = await fetch(gameUrl);
       if (resp.ok) {
@@ -721,14 +717,11 @@ async function loadGameInFrame(frame, gameUrl) {
         return;
       }
     } catch(e) {
-      // إذا فشل fetch (CORS) نفتح في تبويب جديد تلقائياً
-      console.warn('fetch failed, opening new tab:', e);
-      window.open(gameUrl, '_blank', 'noopener');
-      return;
+      console.warn('supabase fetch failed:', e);
     }
   }
 
-  // روابط أخرى (Unity, Godot, iframe خارجي)
+  // روابط خارجية أو HTML — نحمّلها مباشرة في iframe.src (بدون fetch لتجنب CORS)
   frame.removeAttribute('srcdoc');
   frame.src = gameUrl;
 }
@@ -813,10 +806,11 @@ function shareGame() {
 // ===== GAME VIEW CONTROLS =====
 let isGameFullscreen = false;
 
-function toggleGameFullscreen() {
-  const modalBox  = document.getElementById('gameModalBox');
-  const infoPanel = document.getElementById('gameInfoPanel');
-  const icon      = document.getElementById('fullscreenIcon');
+function toggleGameView() {
+  const modalBox   = document.getElementById('gameModalBox');
+  const infoPanel  = document.getElementById('gameInfoPanel');
+  const icon       = document.getElementById('viewToggleIcon');
+  const label      = document.getElementById('viewToggleLabel');
   if (!modalBox) return;
 
   isGameFullscreen = !isGameFullscreen;
@@ -824,15 +818,20 @@ function toggleGameFullscreen() {
   if (isGameFullscreen) {
     modalBox.classList.add('game-modal-fullscreen');
     if (infoPanel) infoPanel.classList.add('hidden');
-    icon.textContent = '⊡';
+    if (icon)  icon.textContent  = '⊡';
+    if (label) label.textContent = 'نافذة مصغرة';
     showToast('وضع الشاشة الكاملة — اضغط مجدداً للخروج');
   } else {
     modalBox.classList.remove('game-modal-fullscreen');
     if (infoPanel) infoPanel.classList.remove('hidden');
-    icon.textContent = '⛶';
+    if (icon)  icon.textContent  = '⛶';
+    if (label) label.textContent = 'شاشة كاملة';
     showToast('وضع النافذة');
   }
 }
+
+// Keep old name as alias for backward compatibility
+function toggleGameFullscreen() { toggleGameView(); }
 
 async function openGameNewTab() {
   if (!currentGame?.game_url) return;
@@ -966,12 +965,14 @@ function closeModal(id) {
     document.title = 'GameVault — منصة الألعاب';
     // Reset fullscreen state
     if (isGameFullscreen) {
-      const modalBox  = document.getElementById('gameModalBox');
-      const infoPanel = document.getElementById('gameInfoPanel');
-      const icon      = document.getElementById('fullscreenIcon');
+      const modalBox   = document.getElementById('gameModalBox');
+      const infoPanel  = document.getElementById('gameInfoPanel');
+      const icon       = document.getElementById('viewToggleIcon');
+      const label      = document.getElementById('viewToggleLabel');
       if (modalBox)  modalBox.classList.remove('game-modal-fullscreen');
       if (infoPanel) infoPanel.classList.remove('hidden');
-      if (icon)      icon.textContent = '⛶';
+      if (icon)      icon.textContent  = '⛶';
+      if (label)     label.textContent = 'شاشة كاملة';
       isGameFullscreen = false;
     }
     // Reset black-screen notice
