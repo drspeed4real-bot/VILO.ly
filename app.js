@@ -726,18 +726,37 @@ async function loadGameInFrame(frame, gameUrl) {
   frame.src = gameUrl;
 }
 
+async function openGameBySlug(slug) {
+  const { data: g, error } = await sb.from('games').select('*').eq('slug', slug).single();
+  if (error || !g) {
+    console.error('openGameBySlug error:', error);
+    return showToast('تعذر تحميل اللعبة: ' + (error?.message || 'غير معروف'));
+  }
+  await _renderGameModal(g);
+}
+
 async function openGame(id) {
   const { data: g, error } = await sb.from('games').select('*').eq('id', id).single();
   if (error || !g) {
     console.error('openGame error:', error);
     return showToast('تعذر تحميل اللعبة: ' + (error?.message || 'غير معروف'));
   }
+  await _renderGameModal(g);
+}
+
+async function _renderGameModal(g) {
   // جلب اسم الرافع
   if (g.uploader_id) {
     const { data: prof } = await sb.from('profiles').select('username').eq('id', g.uploader_id).single();
     g.profiles = prof || null;
   }
   currentGame = g;
+
+  // Push SEO-friendly slug URL to browser history
+  if (g.slug) {
+    const slugUrl = `${window.location.pathname.replace(/\/game\/[^/]+$/, '')}/game/${g.slug}`;
+    window.history.pushState({ gameSlug: g.slug }, g.title, slugUrl);
+  }
 
   document.getElementById('gmTitle').textContent    = g.title;
   document.getElementById('gmDesc').textContent     = g.description || '';
@@ -754,7 +773,7 @@ async function openGame(id) {
   const gameUrl = g.game_url || '';
   await loadGameInFrame(frame, gameUrl);
 
-  const liked = likedGames.has(id);
+  const liked = likedGames.has(g.id);
   document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
   document.getElementById('likeBtn').className = 'action-btn like-btn' + (liked ? ' liked' : '');
 
@@ -798,7 +817,9 @@ async function toggleLike() {
 }
 
 function shareGame() {
-  const url = window.location.href.split('?')[0] + `?game=${currentGame?.id}`;
+  const base = window.location.origin + window.location.pathname.replace(/\/game\/[^/]+$/, '');
+  const slug = currentGame?.slug;
+  const url = slug ? `${base}/game/${slug}` : window.location.href.split('?')[0] + `?game=${currentGame?.id}`;
   if (navigator.share) navigator.share({ title: currentGame?.title, url });
   else { navigator.clipboard.writeText(url); showToast('تم نسخ الرابط 📋'); }
 }
@@ -963,6 +984,9 @@ function closeModal(id) {
     const f = document.getElementById('gameFrame');
     if (f) { f.src = ''; f.srcdoc = ''; }
     document.title = 'GameVault — منصة الألعاب';
+    // Restore base URL (remove /game/slug or ?game=id)
+    const cleanUrl = window.location.pathname.replace(/\/game\/[^/]+$/, '') || '/';
+    window.history.pushState({}, document.title, cleanUrl + window.location.search.replace(/[?&]game=[^&]+/, ''));
     // Reset fullscreen state
     if (isGameFullscreen) {
       const modalBox   = document.getElementById('gameModalBox');
@@ -1029,9 +1053,57 @@ function setOg(prop, content) {
   el.content = content || '';
 }
 
-// ===== DEEP LINK =====
+// ===== BROWSER BACK BUTTON =====
+window.addEventListener('popstate', (e) => {
+  // If we navigated away from a /game/slug URL, close the modal
+  const slugMatch = window.location.pathname.match(/\/game\/([^/]+)$/);
+  if (!slugMatch) {
+    const modal = document.getElementById('gameModal');
+    if (modal?.classList.contains('open')) {
+      // Close without pushing another history entry
+      modal.classList.remove('open');
+      const f = document.getElementById('gameFrame');
+      if (f) { f.src = ''; f.srcdoc = ''; }
+      document.title = 'GameVault — منصة الألعاب';
+      if (isGameFullscreen) {
+        const modalBox  = document.getElementById('gameModalBox');
+        const infoPanel = document.getElementById('gameInfoPanel');
+        const icon      = document.getElementById('viewToggleIcon');
+        const label     = document.getElementById('viewToggleLabel');
+        if (modalBox)  modalBox.classList.remove('game-modal-fullscreen');
+        if (infoPanel) infoPanel.classList.remove('hidden');
+        if (icon)      icon.textContent  = '⛶';
+        if (label)     label.textContent = 'شاشة كاملة';
+        isGameFullscreen = false;
+      }
+    }
+  } else if (e.state?.gameSlug) {
+    // Navigated to a game slug via back — re-open it
+    openGameBySlug(e.state.gameSlug);
+  }
+});
+
+
 (async () => {
+  await checkSession();
+
+  // Support /game/slug path
+  const slugMatch = window.location.pathname.match(/\/game\/([^/]+)$/);
+  if (slugMatch) {
+    await openGameBySlug(slugMatch[1]);
+    return;
+  }
+
+  // من الـ Worker redirect: ?openGame=slug
   const params = new URLSearchParams(window.location.search);
+  const openSlug = params.get('openGame');
+  if (openSlug) {
+    window.history.replaceState({}, '', `/game/${openSlug}`);
+    await openGameBySlug(openSlug);
+    return;
+  }
+
+  // Legacy fallback: ?game=id
   const gameId = params.get('game');
-  if (gameId) { await checkSession(); await openGame(gameId); }
+  if (gameId) { await openGame(gameId); }
 })();
