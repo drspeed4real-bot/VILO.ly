@@ -166,13 +166,25 @@
 
 <!-- GAME MODAL (same as main page) -->
 <div class="modal-overlay" id="gameModal" onclick="overlayClose(event,'gameModal')">
-  <div class="modal game-modal">
+  <div class="modal game-modal" id="gameModalBox">
     <button class="modal-close" onclick="closeModal('gameModal')">✕</button>
+    <!-- شريط تحكم اللعبة -->
+    <div class="game-controls-bar">
+      <div class="game-controls-left">
+        <button class="ctrl-btn" onclick="reloadFrame()" title="إعادة التحميل">🔄 إعادة تحميل</button>
+        <button class="ctrl-btn" onclick="openGameNewTab()" title="فتح في تبويب جديد">↗ تبويب جديد</button>
+      </div>
+      <div class="game-controls-right">
+        <button class="ctrl-btn ctrl-view-toggle" id="viewToggleBtn" onclick="toggleGameView()" title="تبديل العرض">
+          <span id="viewToggleIcon">⛶</span> <span id="viewToggleLabel">شاشة كاملة</span>
+        </button>
+      </div>
+    </div>
     <div class="game-modal-inner">
       <div class="game-play-area">
         <iframe id="gameFrame" src="" allowfullscreen></iframe>
       </div>
-      <div class="game-info-panel">
+      <div class="game-info-panel" id="gameInfoPanel">
         <div class="gip-scroll">
           <h2 id="gmTitle"></h2>
           <div class="game-meta-row">
