@@ -992,6 +992,8 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   background:#111827;
   color:#fff;
   margin-top:50px;
+  width: 100%; /* جديد: يخليه ياخذ العرض كامل */
+  box-sizing: border-box; /* جديد: عشان الـ padding ما يخرب العرض */
 }
 
 .footer-container{
@@ -1001,16 +1003,19 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:30px;
+  box-sizing: border-box; /* جديد: أمان إضافي */
 }
 
 .site-footer h3,
 .site-footer h4{
   margin-bottom:15px;
+  margin-top: 0; /* جديد: يشيل المسافة اللي فوق العنوان */
 }
 
 .site-footer ul{
   list-style:none;
   padding:0;
+  margin: 0; /* جديد: يشيل المسافة الافتراضية للقائمة */
 }
 
 .site-footer li{
@@ -1038,4 +1043,5 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   text-align:center;
   padding:20px;
   color:#9ca3af;
+  margin: 0; /* جديد: عشان ما يكون فيه فراغ أسود تحت */
 }
