@@ -160,7 +160,13 @@
 window.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const id   = params.get('id');
-  const slug = params.get('slug');
+  let slug = params.get('slug');
+
+  // إذا لم يوجد slug في query string، اقرأه من الـ path
+  if (!slug) {
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (pathParts.length === 1) slug = pathParts[0];
+  }
 
   if (!id && !slug) { showError(); return; }
 
