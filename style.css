@@ -1045,3 +1045,150 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   color:#9ca3af;
   margin: 0; /* جديد: عشان ما يكون فيه فراغ أسود تحت */
 }
+
+
+/* =========================
+   Mobile & Tablet Responsive
+   ========================= */
+
+/* الشاشات الصغيرة */
+@media (max-width: 900px){
+
+  .game-page-layout{
+    grid-template-columns: 1fr !important;
+    padding: 15px;
+    gap: 20px;
+  }
+
+  .game-info-sidebar{
+    order: -1;
+  }
+
+  .game-title-big{
+    font-size: 1.3rem;
+    word-break: break-word;
+  }
+
+  .game-play-wrapper{
+    min-height: 300px;
+    aspect-ratio: 16/9;
+  }
+
+  .game-play-controls{
+    justify-content: center;
+  }
+
+  .game-play-controls .ctrl-btn{
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .game-actions-row{
+    flex-direction: column;
+  }
+
+  .game-actions-row button{
+    width: 100%;
+  }
+
+  .share-btns{
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  .share-btns a,
+  .share-btns button{
+    width: 100%;
+    text-align: center;
+  }
+
+  .embed-section textarea{
+    font-size: 12px;
+  }
+
+  .back-bar{
+    padding: 12px 15px 0;
+  }
+}
+
+/* الجوال */
+@media (max-width: 600px){
+
+  .topbar{
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px !important;
+  }
+
+  .topbar-right{
+    width: 100%;
+    justify-content: center;
+    margin-right: 0 !important;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .logo-text{
+    font-size: 1rem;
+  }
+
+  .game-title-big{
+    font-size: 1.15rem;
+  }
+
+  .game-desc-text{
+    font-size: 0.9rem;
+  }
+
+  .game-meta-badges{
+    gap: 5px;
+  }
+
+  .uploader-card{
+    padding: 10px;
+  }
+
+  .game-cover-img,
+  .game-cover-placeholder{
+    aspect-ratio: 16/9;
+  }
+
+  .game-play-wrapper{
+    min-height: 250px;
+  }
+
+  .more-games-section{
+    padding: 0 15px 30px;
+  }
+}
+
+/* منع التمرير الأفقي */
+html,
+body{
+  overflow-x:hidden;
+  max-width:100%;
+}
+
+/* الصور */
+img{
+  max-width:100%;
+  height:auto;
+}
+
+/* iframe */
+iframe{
+  max-width:100%;
+}
+
+/* الأزرار */
+button,
+a{
+  touch-action: manipulation;
+}
+
+.games-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:16px;
+}
