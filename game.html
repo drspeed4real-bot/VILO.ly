@@ -339,6 +339,7 @@ let liked    = false;
 window.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
  const slug = params.get('slug');
+const slug = params.get('slug');
 gameId = params.get('id');
   // تحقق من الجلسة لإظهار أزرار المستخدم
   await checkSession();
@@ -349,16 +350,15 @@ gameId = params.get('id');
     updateLikeBtn();
   }
 
-  if (!gameId) {
-    showError();
-    return;
-  }
+if (!gameId && !slug) {
+  showError();
+  return;
+}
 
-  await loadGamePage(gameId);
-});
+await loadGamePage(gameId, slug);
 
 // ===== تحميل بيانات اللعبة =====
-async function loadGamePage(id) {
+async function loadGamePage(id, slug) {
   try {
  let query = sb.from('games').select('*');
 
@@ -372,10 +372,18 @@ if (id) {
   query = query.eq('slug', slug);
 }
 
-const { data: g, error } =
-await query.single();
-    if (error || !g) { showError(); return; }
+let query = sb
+  .from('games')
+  .select('*');
 
+if (id) {
+  query = query.eq('id', id);
+} else {
+  query = query.eq('slug', slug);
+}
+
+const { data: g, error } =
+  await query.single();
     // جلب بيانات الرافع
     if (g.uploader_id) {
       const { data: prof } = await sb.from('profiles').select('username, avatar_url').eq('id', g.uploader_id).single();
