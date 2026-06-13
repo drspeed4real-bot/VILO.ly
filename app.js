@@ -249,7 +249,9 @@ function gameCardHTML(g, showDelete = false) {
   const seoBadge = g.seo_enabled ? `<span class="seo-badge">SEO</span>` : '';
   const del  = showDelete ? `<button onclick="deleteGame(event,'${g.id}')" style="color:var(--red);background:none;border:none;cursor:pointer;font-size:0.75rem;">🗑</button>` : '';
   return `
-  <div class="game-card" onclick="window.location='game.html?id=${g.id}'" style="cursor:pointer">
+<div class="game-card"
+     onclick="window.location.href='/${g.slug}'"
+     style="cursor:pointer">
     <div style="position:relative">
       ${thumb}
       <div class="thumb-overlay">▶</div>
