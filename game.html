@@ -338,8 +338,8 @@ let liked    = false;
 // ===== تهيئة الصفحة =====
 window.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
-  gameId = params.get('id');
-
+ const slug = params.get('slug');
+gameId = params.get('id');
   // تحقق من الجلسة لإظهار أزرار المستخدم
   await checkSession();
   if (currentUser) {
@@ -360,7 +360,20 @@ window.addEventListener('DOMContentLoaded', async () => {
 // ===== تحميل بيانات اللعبة =====
 async function loadGamePage(id) {
   try {
-    const { data: g, error } = await sb.from('games').select('*').eq('id', id).single();
+ let query = sb.from('games').select('*');
+
+if (id) {
+  query = query.eq('id', id);
+} else {
+  const slug =
+    new URLSearchParams(window.location.search)
+    .get('slug');
+
+  query = query.eq('slug', slug);
+}
+
+const { data: g, error } =
+await query.single();
     if (error || !g) { showError(); return; }
 
     // جلب بيانات الرافع
