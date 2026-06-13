@@ -1,29 +1,327 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>من نحن</title>
-<meta name="description" content="تعرف على منصة GameVault ورسالتها في تقديم ألعاب مجانية عبر المتصفح.">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us | VILO.LY Games</title>
+    <meta name="description" content="VILO.LY is an indie game studio from Al Khums, Libya making fast, fun, and unforgettable browser games. No downloads. Just play.">
+    <meta name="keywords" content="VILO.LY, browser games, indie games, Libya game studio, free online games">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="About VILO.LY Games">
+    <meta property="og:description" content="We build fast, fun, browser-first games for players worldwide.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vilo.ly/about">
+    
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-dark: #5b21b6;
+            --bg: #0f0f14;
+            --card: #1a1a24;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #22d3ee;
+            --border: #2a2a3a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            padding: 24px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+        
+        .logo span {
+            color: var(--primary);
+        }
+        
+        main {
+            padding: 60px 0;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 16px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--muted);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+            margin-bottom: 80px;
+        }
+        
+        .about-card {
+            background: var(--card);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+        
+        p {
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+        
+        p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin: 60px 0;
+            text-align: center;
+        }
+        
+        .stat-item {
+            background: var(--card);
+            padding: 32px 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+        
+        .team-section {
+            margin-top: 80px;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 40px;
+        }
+        
+        .values {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+        
+        .value-item {
+            background: var(--card);
+            padding: 32px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .value-item h3 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+        
+        .cta {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            padding: 60px 40px;
+            border-radius: 16px;
+            text-align: center;
+            margin-top: 80px;
+        }
+        
+        .cta h2 {
+            color: white;
+            margin-bottom: 16px;
+        }
+        
+        .cta p {
+            color: #e0e7ff;
+            margin-bottom: 24px;
+            font-size: 1.1rem;
+        }
+        
+        .btn {
+            background: white;
+            color: var(--primary-dark);
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 60px;
+        }
+        
+        @media (max-width: 900px) {
+            .about-grid, .values {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .about-card, .cta {
+                padding: 32px 24px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <div class="container">
+            <a href="/" class="logo">VILO<span>.LY</span></a>
+        </div>
+    </header>
 
-<h1>من نحن</h1>
+    <main>
+        <div class="container">
+            <div class="hero">
+                <h1>We Make Games You Can't Put Down</h1>
+                <p class="tagline">
+                    VILO.LY is an independent game studio from Al Khums, Libya. We build fast, fun, browser-first games for players worldwide.
+                </p>
+            </div>
 
-<p>
-مرحبًا بكم في GameVault، منصة متخصصة في توفير تجربة ألعاب إلكترونية سهلة وسريعة عبر المتصفح.
-</p>
+            <div class="about-grid">
+                <div class="about-card">
+                    <h2>Our Story</h2>
+                    <p>
+                        VILO.LY started in 2024 with one mission: bring back the magic of instant, no-download gaming. We were tired of 100GB updates and 20-minute load screens.
+                    </p>
+                    <p>
+                        So we made games that load in seconds and hook you in minutes. No installs, no paywalls, just pure gameplay. From arcade shooters to puzzle battlers, if it’s fun, we’ll ship it. And we’re just getting started.
+                    </p>
+                </div>
+                <div class="about-card">
+                    <h2>What We Believe</h2>
+                    <p>
+                        <strong>Gameplay first:</strong> Graphics are cool, but mechanics are king. If it’s not fun in 10 seconds, it’s not done.
+                    </p>
+                    <p>
+                        <strong>Respect your time:</strong> No grindy tutorials, no forced logins. Click play and you’re in.
+                    </p>
+                    <p>
+                        <strong>Made for everyone:</strong> Our games run on phones, laptops, and that old PC in your library. No one gets left out.
+                    </p>
+                </div>
+            </div>
 
-<p>
-نسعى إلى جمع أفضل الألعاب المتاحة عبر الإنترنت في مكان واحد، مما يتيح للمستخدمين اكتشاف ألعاب جديدة والاستمتاع بها دون الحاجة إلى تنزيلات معقدة أو إجراءات تسجيل طويلة.
-</p>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number">12+</span>
+                    <span class="stat-label">Games Shipped</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">500K+</span>
+                    <span class="stat-label">Players Monthly</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number"><3s</span>
+                    <span class="stat-label">Average Load Time</span>
+                </div>
+            </div>
 
-<p>
-نعمل باستمرار على تحسين جودة المحتوى وتجربة المستخدم وإضافة ألعاب جديدة بصورة دورية لتوفير تجربة ترفيهية ممتعة لجميع الفئات العمرية.
-</p>
+            <div class="team-section">
+                <h2 class="section-title">Our Values</h2>
+                <div class="values">
+                    <div class="value-item">
+                        <h3>Speed</h3>
+                        <p>We prototype fast, ship fast, and fix bugs even faster. The web is our playground.</p>
+                    </div>
+                    <div class="value-item">
+                        <h3>Community</h3>
+                        <p>We read every Discord message. Player feedback directly shapes our next update.</p>
+                    </div>
+                    <div class="value-item">
+                        <h3>Craft</h3>
+                        <p>Small team, big polish. Every pixel and sound effect is placed with intent.</p>
+                    </div>
+                </div>
+            </div>
 
-<p>
-هدفنا هو توفير منصة موثوقة وسهلة الاستخدام تمكن الزوار من الوصول إلى الألعاب والاستمتاع بها بأفضل شكل ممكن.
-</p>
+            <div class="cta">
+                <h2>Ready to Play?</h2>
+                <p>All our games are free and run right in your browser. No downloads, no waiting.</p>
+                <a href="/games" class="btn">Browse Games</a>
+            </div>
+        </div>
+    </main>
 
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 VILO.LY Games. Made with caffeine in Al Khums, Libya.</p>
+        </div>
+    </footer>
 </body>
 </html>
