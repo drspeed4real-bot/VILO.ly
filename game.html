@@ -4,648 +4,142 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <!-- ===== SEO META — تُملأ ديناميكياً ===== -->
   <title id="pageTitle">GameVault — تحميل اللعبة</title>
-  <meta name="description"         id="metaDesc"    content="العب مجاناً على GameVault"/>
-  <meta name="keywords"            id="metaKeywords" content="العاب, gamevault"/>
-  <meta name="robots"              content="index, follow"/>
-  <link rel="canonical"            id="canonical"   href=""/>
+  <meta name="description" id="metaDesc" content="العب مجاناً على GameVault"/>
+  <meta name="keywords" id="metaKeywords" content="العاب, gamevault"/>
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" id="canonical" href=""/>
 
-  <!-- Open Graph -->
-  <meta property="og:type"        content="website"/>
-  <meta property="og:site_name"   content="GameVault"/>
-  <meta property="og:title"       id="ogTitle"     content="GameVault"/>
-  <meta property="og:description" id="ogDesc"      content=""/>
-  <meta property="og:image"       id="ogImage"     content=""/>
-  <meta property="og:url"         id="ogUrl"       content=""/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="GameVault"/>
+  <meta property="og:title" id="ogTitle" content="GameVault"/>
+  <meta property="og:description" id="ogDesc" content=""/>
+  <meta property="og:image" id="ogImage" content=""/>
+  <meta property="og:url" id="ogUrl" content=""/>
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card"        content="summary_large_image"/>
-  <meta name="twitter:title"       id="twTitle"    content="GameVault"/>
-  <meta name="twitter:description" id="twDesc"     content=""/>
-  <meta name="twitter:image"       id="twImage"    content=""/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" id="twTitle" content="GameVault"/>
+  <meta name="twitter:description" id="twDesc" content=""/>
+  <meta name="twitter:image" id="twImage" content=""/>
 
-  <!-- JSON-LD Schema.org -->
   <script type="application/ld+json" id="schemaScript">{}</script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    /* ===== صفحة اللعبة المخصصة ===== */
-    .game-page-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 24px;
-      padding: 24px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    @media (max-width: 900px) {
-      .game-page-layout { grid-template-columns: 1fr; }
-    }
-
-    /* منطقة تشغيل اللعبة */
-    .game-play-wrapper {
-      background: #000;
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      position: relative;
-      aspect-ratio: 16/10;
-      min-height: 400px;
-    }
-    .game-play-wrapper iframe {
-      width: 100%; height: 100%;
-      border: none; display: block;
-    }
-    .game-play-controls {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    /* لوحة معلومات اللعبة */
-    .game-info-sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .game-cover-img {
-      width: 100%;
-      aspect-ratio: 16/9;
-      object-fit: cover;
-      border-radius: var(--radius);
-      background: var(--bg-card);
-    }
-    .game-cover-placeholder {
-      width: 100%;
-      aspect-ratio: 16/9;
-      border-radius: var(--radius);
-      background: var(--bg-card);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
-    }
-    .game-title-big {
-      font-size: 1.6rem;
-      font-weight: 700;
-      line-height: 1.3;
-      color: var(--text-primary);
-    }
-    .game-desc-text {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.7;
-    }
-    .game-meta-badges {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .game-tags-row {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .game-actions-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .uploader-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-    }
-    .uploader-avatar {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: var(--accent);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 1rem; color: #000;
-      overflow: hidden; flex-shrink: 0;
-    }
-    .uploader-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .uploader-name { font-weight: 600; font-size: 0.9rem; }
-    .uploader-label { font-size: 0.75rem; color: var(--text-muted); }
-
-    /* شريط العودة */
-    .back-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 24px 0;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    .back-bar a {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      display: flex; align-items: center; gap: 6px;
-      transition: color 0.2s;
-    }
-    .back-bar a:hover { color: var(--accent); }
-
-    /* حالة التحميل */
-    .page-loader {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 60vh; gap: 16px;
-      color: var(--text-secondary);
-    }
-    .page-error {
-      text-align: center; padding: 60px 24px;
-    }
-    .page-error .err-icon { font-size: 3rem; margin-bottom: 12px; }
-    .page-error h2 { margin-bottom: 8px; }
-    .page-error p { color: var(--text-secondary); margin-bottom: 20px; }
-
-    /* Share bar */
-    .share-section {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      padding: 16px;
-    }
-    .share-section h4 { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px; }
-    .share-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    /* Embed box */
-    .embed-section {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      padding: 16px;
-    }
-    .embed-section h4 { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
-    .embed-section textarea {
-      width: 100%; background: var(--bg-base);
-      border: 1px solid var(--border-strong);
-      border-radius: var(--radius-sm);
-      color: var(--text-secondary);
-      font-size: 0.78rem; padding: 8px;
-      resize: vertical; min-height: 72px;
-    }
-
-    /* More games */
-    .more-games-section { padding: 0 24px 40px; max-width: 1400px; margin: 0 auto; }
-    .more-games-section h3 { font-size: 1.1rem; margin-bottom: 16px; }
-  </style>
 </head>
+
 <body>
 
-<!-- شريط التنقل العلوي -->
-<div class="topbar" style="position:sticky;top:0;z-index:200;padding: 0 24px;">
-  <a href="index.html" class="sidebar-logo" style="text-decoration:none;display:flex;align-items:center;gap:10px">
-    <span class="logo-hex">⬡</span>
-    <span class="logo-text">GAME<span class="logo-accent">VAULT</span></span>
-  </a>
-  <div class="topbar-right" style="margin-right:auto">
-    <a href="index.html" class="btn-ghost small">🎮 تصفح الألعاب</a>
-    <span id="navUser" style="display:none">
-      <a href="profile.html" class="btn-outline small" style="margin-right:8px">👤 ملفي</a>
-    </span>
-  </div>
-</div>
+<div id="loaderState">جاري التحميل...</div>
+<div id="errorState" style="display:none">اللعبة غير موجودة</div>
 
-<!-- شريط العودة -->
-<div class="back-bar">
-  <a href="index.html">← العودة للرئيسية</a>
-</div>
+<div id="gameContent" style="display:none">
 
-<!-- محتوى الصفحة الرئيسي -->
-<div id="pageContent">
+  <iframe id="gameFrame" style="width:100%;height:500px;border:0"></iframe>
 
-  <!-- حالة التحميل -->
-  <div class="page-loader" id="loaderState">
-    <div class="loader-spinner"></div>
-    <span>جاري تحميل اللعبة...</span>
-  </div>
-
-  <!-- حالة الخطأ -->
-  <div id="errorState" class="page-error" style="display:none">
-    <div class="err-icon">😕</div>
-    <h2>اللعبة غير موجودة</h2>
-    <p>تعذّر العثور على هذه اللعبة. ربما تم حذفها أو الرابط غير صحيح.</p>
-    <a href="index.html" class="btn-primary">العودة للرئيسية</a>
-  </div>
-
-  <!-- محتوى اللعبة -->
-  <div id="gameContent" style="display:none">
-    <div class="game-page-layout">
-
-      <!-- العمود الأيمن: تشغيل اللعبة -->
-      <div>
-        <div class="game-play-wrapper">
-          <iframe id="gameFrame" src="" allowfullscreen
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-modals allow-orientation-lock allow-downloads"></iframe>
-        </div>
-        <div class="game-play-controls">
-          <button class="ctrl-btn" onclick="reloadGame()">🔄 إعادة تحميل</button>
-          <button class="ctrl-btn" onclick="openInNewTab()">↗ تبويب جديد</button>
-          <button class="ctrl-btn" onclick="toggleFullscreen()">⛶ ملء الشاشة</button>
-        </div>
-      </div>
-
-      <!-- العمود الأيسر: معلومات اللعبة -->
-      <div class="game-info-sidebar">
-
-        <!-- صورة الغلاف -->
-        <div id="coverWrap"></div>
-
-        <!-- العنوان والوصف -->
-        <div>
-          <h1 class="game-title-big" id="gameTitle">—</h1>
-          <div class="game-meta-badges" style="margin: 10px 0">
-            <span id="gameEngine" class="badge engine-badge"></span>
-            <span id="gameCategory" class="badge cat-badge"></span>
-            <span id="gameDateBadge" class="badge" style="background:var(--bg-card);color:var(--text-muted);font-size:0.72rem"></span>
-          </div>
-          <p class="game-desc-text" id="gameDesc"></p>
-        </div>
-
-        <!-- الكلمات المفتاحية -->
-        <div class="game-tags-row" id="gameTags"></div>
-
-        <!-- أزرار التفاعل -->
-        <div class="game-actions-row">
-          <button class="action-btn like-btn" id="likeBtn" onclick="toggleLike()">
-            <span id="likeIcon">🤍</span> <span id="likeCount">0</span>
-          </button>
-          <button class="action-btn" onclick="copyShareLink()">📤 مشاركة</button>
-        </div>
-
-        <!-- معلومات الرافع -->
-        <div class="uploader-card">
-          <div class="uploader-avatar" id="uploaderAvatar">؟</div>
-          <div>
-            <div class="uploader-name" id="uploaderName">—</div>
-            <div class="uploader-label">مطوّر اللعبة</div>
-          </div>
-        </div>
-
-        <!-- مشاركة -->
-        <div class="share-section">
-          <h4>🔗 مشاركة اللعبة</h4>
-          <div class="share-btns">
-            <button class="btn-ghost small" onclick="copyShareLink()">نسخ الرابط</button>
-            <a id="shareWhatsapp" href="#" target="_blank" class="btn-ghost small">واتساب</a>
-            <a id="shareTwitter"  href="#" target="_blank" class="btn-ghost small">تويتر</a>
-          </div>
-        </div>
-
-        <!-- تضمين -->
-        <div class="embed-section">
-          <h4>‹› كود التضمين</h4>
-          <textarea id="embedCode" readonly></textarea>
-          <button class="btn-ghost small" style="margin-top:6px" onclick="copyEmbed()">نسخ الكود</button>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ألعاب أخرى من نفس الفئة -->
-    <div class="more-games-section">
-      <h3>ألعاب مشابهة 🎮</h3>
-      <div class="games-grid" id="moreGamesGrid"></div>
-    </div>
-  </div>
+  <h1 id="gameTitle"></h1>
+  <p id="gameDesc"></p>
 
 </div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
 
 <script src="app.js"></script>
+
 <script>
-// ======================================================
-//  game.html — منطق الصفحة المخصصة لكل لعبة
-// ======================================================
-
 let gameData = null;
-let gameId   = null;
-let liked    = false;
 
-// ===== تهيئة الصفحة =====
 window.addEventListener('DOMContentLoaded', async () => {
+
   const params = new URLSearchParams(window.location.search);
- const slug = params.get('slug');
-const slug = params.get('slug');
-gameId = params.get('id');
-  // تحقق من الجلسة لإظهار أزرار المستخدم
-  await checkSession();
-  if (currentUser) {
-    document.getElementById('navUser').style.display = 'inline-flex';
-    await loadLikedGames();
-    liked = likedGames.has(gameId);
-    updateLikeBtn();
+
+  const id = params.get('id');
+  const slug = params.get('slug');
+
+  if (!id && !slug) {
+    showError();
+    return;
   }
 
-if (!gameId && !slug) {
-  showError();
-  return;
-}
+  await loadGamePage(id, slug);
+});
 
-await loadGamePage(gameId, slug);
 
-// ===== تحميل بيانات اللعبة =====
 async function loadGamePage(id, slug) {
   try {
- let query = sb.from('games').select('*');
 
-if (id) {
-  query = query.eq('id', id);
-} else {
-  const slug =
-    new URLSearchParams(window.location.search)
-    .get('slug');
+    let query = sb.from('games').select('*');
 
-  query = query.eq('slug', slug);
-}
+    if (id) {
+      query = query.eq('id', id);
+    } else {
+      query = query.eq('slug', slug);
+    }
 
-let query = sb
-  .from('games')
-  .select('*');
+    const { data: g, error } = await query.single();
 
-if (id) {
-  query = query.eq('id', id);
-} else {
-  query = query.eq('slug', slug);
-}
-
-const { data: g, error } =
-  await query.single();
-    // جلب بيانات الرافع
-    if (g.uploader_id) {
-      const { data: prof } = await sb.from('profiles').select('username, avatar_url').eq('id', g.uploader_id).single();
-      g.profiles = prof || null;
+    if (error || !g) {
+      showError();
+      return;
     }
 
     gameData = g;
 
-    // حدّث واجهة الصفحة
-    renderGamePage(g);
-
-    // حدّث الـ SEO
+    renderGame(g);
     injectSEO(g);
 
-    // حمّل اللعبة في iframe
-    const frame = document.getElementById('gameFrame');
-    await loadGameInFrame(frame, g.game_url || '');
+    document.getElementById('gameFrame').src = g.game_url;
 
-    // حمّل الألعاب المشابهة
-    await loadMoreGames(g);
-
-    // إظهار المحتوى
     document.getElementById('loaderState').style.display = 'none';
     document.getElementById('gameContent').style.display = 'block';
 
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     showError();
   }
 }
 
-// ===== رسم واجهة اللعبة =====
-function renderGamePage(g) {
-  document.getElementById('gameTitle').textContent    = g.title || '—';
-  document.getElementById('gameDesc').textContent     = g.description || '';
-  document.getElementById('gameEngine').textContent   = g.engine || '';
-  document.getElementById('gameCategory').textContent = categoryLabel(g.category);
-  document.getElementById('likeCount').textContent    = g.likes_count || 0;
 
-  // تاريخ النشر
-  if (g.created_at) {
-    const d = new Date(g.created_at).toLocaleDateString('ar', { year:'numeric', month:'long', day:'numeric' });
-    document.getElementById('gameDateBadge').textContent = '📅 ' + d;
-  }
-
-  // صورة الغلاف
-  const cw = document.getElementById('coverWrap');
-  if (g.thumbnail_url) {
-    cw.innerHTML = `<img class="game-cover-img" src="${escHtml(g.thumbnail_url)}" alt="${escHtml(g.title)}" loading="lazy"/>`;
-  } else {
-    cw.innerHTML = `<div class="game-cover-placeholder">${engineEmoji(g.engine)}</div>`;
-  }
-
-  // الكلمات المفتاحية
-  const tagsEl = document.getElementById('gameTags');
-  tagsEl.innerHTML = (g.tags || []).map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
-
-  // معلومات الرافع
-  const uname = g.profiles?.username || 'مجهول';
-  document.getElementById('uploaderName').textContent = uname;
-  const uav = document.getElementById('uploaderAvatar');
-  if (g.profiles?.avatar_url) {
-    uav.innerHTML = `<img src="${escHtml(g.profiles.avatar_url)}" alt="${escHtml(uname)}"/>`;
-  } else {
-    uav.textContent = (uname)[0].toUpperCase();
-  }
-
-  // روابط المشاركة
-  const pageUrl = encodeURIComponent(window.location.href);
-  const pageTitle = encodeURIComponent(g.title);
-  document.getElementById('shareWhatsapp').href = `https://wa.me/?text=${pageTitle}%20${pageUrl}`;
-  document.getElementById('shareTwitter').href  = `https://twitter.com/intent/tweet?text=${pageTitle}&url=${pageUrl}`;
-
-  // كود التضمين
-  const iframeSrc = window.location.href;
-  document.getElementById('embedCode').value =
-    `<iframe src="${iframeSrc}" width="900" height="600" frameborder="0" allowfullscreen title="${g.title}"></iframe>`;
+function renderGame(g) {
+  document.getElementById('gameTitle').textContent = g.title;
+  document.getElementById('gameDesc').textContent = g.description;
 }
 
-// ===== حقن الـ SEO =====
+
 function injectSEO(g) {
-  const url    = window.location.href;
-  const title  = `${g.title} — العب الآن على GameVault`;
-  const desc   = (g.meta_description || g.description || '').slice(0, 160);
-  const image  = g.thumbnail_url || '';
-  const kw     = (g.tags || []).join(', ');
 
-  document.getElementById('pageTitle').textContent      = title;
-  document.title                                        = title;
-  document.getElementById('metaDesc').content          = desc;
-  document.getElementById('metaKeywords').content      = kw;
-  document.getElementById('canonical').href            = url;
+  const url = window.location.href;
 
-  document.getElementById('ogTitle').content           = title;
-  document.getElementById('ogDesc').content            = desc;
-  document.getElementById('ogImage').content           = image;
-  document.getElementById('ogUrl').content             = url;
+  document.title = g.title + " | GameVault";
 
-  document.getElementById('twTitle').content           = title;
-  document.getElementById('twDesc').content            = desc;
-  document.getElementById('twImage').content           = image;
+  document.getElementById('metaDesc').content = g.description || "";
+  document.getElementById('canonical').href = url;
 
-  // JSON-LD Schema.org VideoGame
+  document.getElementById('ogTitle').content = g.title;
+  document.getElementById('ogDesc').content = g.description || "";
+  document.getElementById('ogUrl').content = url;
+
+  document.getElementById('twTitle').content = g.title;
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "VideoGame",
     "name": g.title,
-    "description": desc,
+    "description": g.description,
     "url": url,
-    "image": image,
-    "applicationCategory": "Game",
-    "operatingSystem": "Web Browser",
-    "author": {
-      "@type": "Person",
-      "name": g.profiles?.username || "مجهول"
-    },
-    "datePublished": g.created_at ? g.created_at.split('T')[0] : undefined,
-    "inLanguage": "ar",
-    "genre": categoryLabel(g.category),
-    "keywords": kw
+    "image": g.thumbnail_url || "",
+    "genre": g.category
   };
-  document.getElementById('schemaScript').textContent = JSON.stringify(schema, null, 2);
+
+  document.getElementById('schemaScript').textContent =
+    JSON.stringify(schema, null, 2);
 }
 
-// ===== ألعاب مشابهة =====
-async function loadMoreGames(g) {
-  const grid = document.getElementById('moreGamesGrid');
-  const { data } = await sb.from('games')
-    .select('*')
-    .eq('category', g.category)
-    .neq('id', g.id)
-    .order('likes_count', { ascending: false })
-    .limit(6);
 
-  if (!data || data.length === 0) {
-    grid.closest('.more-games-section').style.display = 'none';
-    return;
-  }
-  grid.innerHTML = data.map(gm => gameCardHTMLGame(gm)).join('');
-}
-
-// كارد اللعبة المخصص لهذه الصفحة (يفتح game.html بدل الـ modal)
-function gameCardHTMLGame(g) {
-  const thumb = g.thumbnail_url
-    ? `<img class="game-thumbnail" src="${escHtml(g.thumbnail_url)}" alt="${escHtml(g.title)}" loading="lazy"/>`
-    : `<div class="game-thumb-placeholder">${engineEmoji(g.engine)}</div>`;
-  return `
-  <div class="game-card" onclick="window.location='game.html?id=${g.id}'">
-    <div style="position:relative">
-      ${thumb}
-      <div class="thumb-overlay">▶</div>
-      <span class="engine-badge">${escHtml(g.engine || '')}</span>
-    </div>
-    <div class="game-card-body">
-      <div class="game-card-title">${escHtml(g.title)}</div>
-      <div class="game-card-desc">${escHtml((g.description || '').slice(0, 70))}</div>
-      <div class="game-card-footer">
-        <span class="game-card-likes">❤ ${g.likes_count || 0}</span>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ===== الإعجاب =====
-async function toggleLike() {
-  if (!currentUser) { showModal('loginModal'); return; }
-  if (!gameId) return;
-
-  const wasLiked = likedGames.has(gameId);
-  if (wasLiked) {
-    await sb.from('game_likes').delete().eq('user_id', currentUser.id).eq('game_id', gameId);
-    likedGames.delete(gameId);
-    gameData.likes_count = Math.max(0, (gameData.likes_count || 1) - 1);
-  } else {
-    await sb.from('game_likes').insert({ user_id: currentUser.id, game_id: gameId });
-    likedGames.add(gameId);
-    gameData.likes_count = (gameData.likes_count || 0) + 1;
-  }
-  await sb.from('games').update({ likes_count: gameData.likes_count }).eq('id', gameId);
-  liked = !wasLiked;
-  document.getElementById('likeCount').textContent = gameData.likes_count;
-  updateLikeBtn();
-  showToast(liked ? '❤️ تمت الإضافة للمفضلة' : '🤍 تم الإزالة من المفضلة');
-}
-
-function updateLikeBtn() {
-  const btn  = document.getElementById('likeBtn');
-  const icon = document.getElementById('likeIcon');
-  if (!btn || !icon) return;
-  const isLiked = likedGames.has(gameId);
-  icon.textContent = isLiked ? '❤️' : '🤍';
-  btn.className    = 'action-btn like-btn' + (isLiked ? ' liked' : '');
-}
-
-// ===== التحكم في اللعبة =====
-function reloadGame() {
-  const f = document.getElementById('gameFrame');
-  if (!f || !gameData?.game_url) return;
-  f.src = ''; f.srcdoc = '';
-  showToast('🔄 جاري إعادة التحميل...');
-  setTimeout(() => loadGameInFrame(f, gameData.game_url), 200);
-}
-
-function openInNewTab() {
-  if (!gameData?.game_url) return;
-  const url = gameData.game_url;
-  if (url.startsWith('data:text/html')) {
-    const html = decodeURIComponent(url.split(',').slice(1).join(','));
-    const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-    const blobUrl = URL.createObjectURL(blob);
-    window.open(blobUrl, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
-  } else {
-    window.open(url, '_blank', 'noopener');
-  }
-}
-
-function toggleFullscreen() {
-  const wrapper = document.querySelector('.game-play-wrapper');
-  if (!wrapper) return;
-  if (!document.fullscreenElement) {
-    wrapper.requestFullscreen?.();
-  } else {
-    document.exitFullscreen?.();
-  }
-}
-
-function copyShareLink() {
-  navigator.clipboard.writeText(window.location.href);
-  showToast('تم نسخ الرابط 📋');
-}
-
-function copyEmbed() {
-  const ta = document.getElementById('embedCode');
-  if (ta) { ta.select(); navigator.clipboard.writeText(ta.value); showToast('تم نسخ كود التضمين 📋'); }
-}
-
-// ===== مساعدات =====
 function showError() {
   document.getElementById('loaderState').style.display = 'none';
-  document.getElementById('errorState').style.display  = 'block';
+  document.getElementById('errorState').style.display = 'block';
 }
 
-function categoryLabel(cat) {
-  const map = { action:'أكشن', puzzle:'ألغاز', adventure:'مغامرات', strategy:'استراتيجية', racing:'سباقات', other:'أخرى' };
-  return map[cat] || (cat || '');
-}
 </script>
-
-<!-- نافذة تسجيل الدخول — نفس index.html -->
-<div class="modal-overlay" id="loginModal" onclick="overlayClose(event,'loginModal')">
-  <div class="modal auth-modal">
-    <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
-    <div class="auth-logo">⬡ GAMEVAULT</div>
-    <h2>تسجيل الدخول</h2>
-    <div class="form-group"><input type="email" id="loginEmail" placeholder="البريد الإلكتروني"/></div>
-    <div class="form-group"><input type="password" id="loginPassword" placeholder="كلمة المرور"/></div>
-    <button class="btn-primary full-w" onclick="login()">دخول</button>
-    <div id="loginMsg" class="msg hidden"></div>
-    <p class="auth-switch">ليس لديك حساب؟ <a href="index.html">سجّل الآن</a></p>
-  </div>
-</div>
 
 </body>
 </html>
