@@ -986,3 +986,55 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   .upload-card { padding: 20px; }
   .thumb-upload-area { flex-direction: column; }
 }
+
+.site-footer{
+  background:#111827;
+  color:#fff;
+  margin-top:50px;
+}
+
+.footer-container{
+  max-width:1200px;
+  margin:auto;
+  padding:50px 20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:30px;
+}
+
+.site-footer h3,
+.site-footer h4{
+  margin-bottom:15px;
+}
+
+.site-footer ul{
+  list-style:none;
+  padding:0;
+}
+
+.site-footer li{
+  margin-bottom:10px;
+}
+
+.site-footer a{
+  color:#cbd5e1;
+  text-decoration:none;
+  transition:.3s;
+}
+
+.site-footer a:hover{
+  color:#60a5fa;
+}
+
+.footer-social{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.footer-bottom{
+  border-top:1px solid #374151;
+  text-align:center;
+  padding:20px;
+  color:#9ca3af;
+}
