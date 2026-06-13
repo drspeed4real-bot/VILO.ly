@@ -1046,3 +1046,24 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
   margin: 0; /* جديد: عشان ما يكون فيه فراغ أسود تحت */
 }
 
+
+/* ===== STANDALONE GAME PAGE (/slug) ===== */
+.game-page-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 20px 0 14px;
+  transition: color 0.15s;
+}
+.game-page-back:hover { color: var(--accent); }
+.game-page-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 40px;
+}
+.game-page-card.game-modal-fullscreen { z-index: 2000; background: #000; }
