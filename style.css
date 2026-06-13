@@ -1019,7 +1019,7 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
 }
 
 .site-footer li{
-  margin-bottom:10px;
+  margin-bottom:0px;
 }
 
 .site-footer a{
