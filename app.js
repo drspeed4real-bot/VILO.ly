@@ -248,9 +248,10 @@ function gameCardHTML(g, showDelete = false) {
     : `<div class="game-thumb-placeholder">${engineEmoji(g.engine)}</div>`;
   const seoBadge = g.seo_enabled ? `<span class="seo-badge">SEO</span>` : '';
   const del  = showDelete ? `<button onclick="deleteGame(event,'${g.id}')" style="color:var(--red);background:none;border:none;cursor:pointer;font-size:0.75rem;">🗑</button>` : '';
+  const gameLink = g.slug ? `/${g.slug}` : `/game.html?id=${g.id}`;
   return `
 <div class="game-card"
-     onclick="window.location.href='/${g.slug}'"
+     onclick="window.location.href='${gameLink}'"
      style="cursor:pointer">
     <div style="position:relative">
       ${thumb}
@@ -586,7 +587,7 @@ async function uploadGame() {
   if (urlMode && !gameUrl) return showMsg('uploadMsg','يرجى إدخال رابط اللعبة','error');
 
   const tags = rawTags ? rawTags.split(',').map(t => t.trim()).filter(Boolean) : [];
-  const slug = slugify(title);
+  const slug = await ensureUniqueSlug(slugify(title) || 'game');
   const uid  = currentUser.id;
   const ts   = Date.now();
   const gameFolder = `${uid}/${ts}`;
@@ -800,8 +801,8 @@ async function toggleLike() {
 }
 
 function shareGame() {
-  const base = window.location.href.split('/').slice(0, -1).join('/');
-  const url  = `${base}/game.html?id=${currentGame?.id}`;
+  const origin = window.location.origin;
+  const url = currentGame?.slug ? `${origin}/${currentGame.slug}` : `${origin}/game.html?id=${currentGame?.id}`;
   if (navigator.share) navigator.share({ title: currentGame?.title, url });
   else { navigator.clipboard.writeText(url); showToast('تم نسخ الرابط 📋'); }
 }
@@ -1009,6 +1010,19 @@ function escHtml(str) {
 }
 function slugify(str) {
   return str.toLowerCase().trim().replace(/\s+/g,'-').replace(/[^\w\-]/g,'').slice(0,60);
+}
+
+// تأكد من أن الـ slug فريد — إن كان موجوداً، أضف رقم تسلسلي
+async function ensureUniqueSlug(baseSlug) {
+  let slug = baseSlug || 'game';
+  let suffix = 0;
+  while (true) {
+    const candidate = suffix === 0 ? slug : `${slug}-${suffix}`;
+    const { data, error } = await sb.from('games').select('id').eq('slug', candidate).limit(1);
+    if (error || !data || data.length === 0) return candidate;
+    suffix++;
+    if (suffix > 200) return `${slug}-${Date.now()}`;
+  }
 }
 function engineEmoji(eng) {
   return { html:'🌐', unity:'⬡', godot:'🤖', ue4:'🔷' }[eng] || '🎮';
