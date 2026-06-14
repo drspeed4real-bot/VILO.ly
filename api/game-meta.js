@@ -7,7 +7,6 @@ export default async function handler(req) {
   const url  = new URL(req.url);
   const slug = url.searchParams.get('slug') || '';
 
-  // جلب بيانات اللعبة
   const apiRes = await fetch(
     `${SUPABASE_URL}/rest/v1/games?slug=eq.${slug}&select=*&limit=1`,
     { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
@@ -15,9 +14,11 @@ export default async function handler(req) {
   const data = await apiRes.json();
   const g = data?.[0];
 
-  // جلب game.html
   const htmlRes = await fetch(`${url.origin}/game.html`);
   let html = await htmlRes.text();
+
+  // حقن الـ slug دائماً
+  html = html.replace('</head>', `<script>window.__SLUG__="${slug}";</script></head>`);
 
   if (g) {
     const pageUrl = `${url.origin}/${slug}`;
