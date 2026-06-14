@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/category/:cat",
+      "destination": "/category.html?cat=:cat"
+    },
+    {
       "source": "/:slug",
       "destination": "/game.html?slug=:slug"
     }
