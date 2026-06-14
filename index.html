@@ -77,14 +77,14 @@
         <input type="text" id="searchInput" placeholder="ابحث عن لعبة، فئة، كلمة مفتاحية..." />
       </div>
       <div class="topbar-right">
-        <select id="filterEngine" onchange="loadGames()" class="topbar-select">
+        <select id="filterEngine" onchange="refreshBrowse()" class="topbar-select">
           <option value="">كل المحركات</option>
           <option value="html">HTML5</option>
           <option value="unity">Unity</option>
           <option value="godot">Godot</option>
           <option value="ue4">Unreal</option>
         </select>
-        <select id="filterSort" onchange="loadGames()" class="topbar-select">
+        <select id="filterSort" onchange="refreshBrowse()" class="topbar-select">
           <option value="created_at">الأحدث</option>
           <option value="likes">الأكثر إعجاباً</option>
         </select>
@@ -93,6 +93,20 @@
 
     <!-- SECTIONS -->
     <div class="content-area">
+
+      <!-- FEATURED GAMES SLIDER (shown only in browse) -->
+      <div class="featured-slider" id="featuredSlider">
+        <div class="slider-track" id="sliderTrack">
+          <div class="slider-loading">
+            <div class="loader-spinner"></div>
+            <span>جاري تحميل الألعاب المميزة...</span>
+          </div>
+        </div>
+        <button class="slider-arrow slider-arrow-prev" onclick="sliderPrev()" aria-label="السابق">‹</button>
+        <button class="slider-arrow slider-arrow-next" onclick="sliderNext()" aria-label="التالي">›</button>
+        <div class="slider-dots" id="sliderDots"></div>
+        <div class="slider-progress"><div class="slider-progress-bar" id="sliderProgressBar"></div></div>
+      </div>
 
       <!-- HERO (shown only in browse) -->
       <div class="hero-banner" id="heroBanner">
@@ -119,13 +133,24 @@
           <h2 id="browseTitle">الألعاب المتاحة</h2>
           <span class="game-count" id="gameCount"></span>
         </div>
-        <div class="games-grid" id="gamesGrid">
+
+        <!-- ROW SECTIONS (شُعَب الألعاب: الأحدث، الأكثر إعجاباً، الفئات...) -->
+        <div class="games-sections" id="gamesSections">
+          <div class="loader-state">
+            <div class="loader-spinner"></div>
+            <span>جاري التحميل...</span>
+          </div>
+        </div>
+
+        <!-- GRID VIEW (يظهر عند اختيار فئة محددة أو نتائج البحث) -->
+        <div class="games-grid hidden" id="gamesGrid">
           <div class="loader-state">
             <div class="loader-spinner"></div>
             <span>جاري التحميل...</span>
           </div>
         </div>
       </section>
+
 
     
       <!-- UPLOAD SECTION -->
