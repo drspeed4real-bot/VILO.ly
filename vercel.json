@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/:slug",
-      "destination": "/game.html?slug=:slug"
+      "source": "/:slug((?!.*\\.)[^/]+)",
+      "destination": "/api/game-meta?slug=:slug"
     }
   ]
 }
