@@ -20,7 +20,8 @@ let currentCategory = '';
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', async () => {
   await checkSession();
-  if (typeof loadGames === 'function') await loadGames();
+  refreshBrowse();
+  loadFeaturedSlider();
   initSearchEnter();
   // Check if redirected from profile page with upload intent
   if (localStorage.getItem('openUpload') === '1') {
@@ -184,7 +185,10 @@ function goToProfile() {
 // ===== GAMES LOADING =====
 async function loadGames() {
   const grid = document.getElementById('gamesGrid');
+  const sections = document.getElementById('gamesSections');
   if (!grid) return;
+  sections?.classList.add('hidden');
+  grid.classList.remove('hidden');
   grid.innerHTML = `<div class="loader-state"><div class="loader-spinner"></div><span>جاري التحميل...</span></div>`;
 
   const engine = document.getElementById('filterEngine')?.value || '';
@@ -225,6 +229,92 @@ async function loadGames() {
   grid.innerHTML = data.map(g => gameCardHTML(g)).join('');
 }
 
+// ===== GAME ROW SECTIONS (الأحدث، الأكثر إعجاباً، والفئات) =====
+const GAME_SECTION_DEFS = [
+  { key: 'latest',    title: '🆕 الأحدث',          orderCol: 'created_at',  category: null },
+  { key: 'popular',   title: '🔥 الأكثر إعجاباً',   orderCol: 'likes_count', category: null },
+  { key: 'action',    title: '💥 أكشن',             orderCol: 'created_at',  category: 'action' },
+  { key: 'puzzle',    title: '🧩 ألغاز',            orderCol: 'created_at',  category: 'puzzle' },
+  { key: 'adventure', title: '🗺️ مغامرات',          orderCol: 'created_at',  category: 'adventure' },
+  { key: 'strategy',  title: '♟️ استراتيجية',       orderCol: 'created_at',  category: 'strategy' },
+  { key: 'racing',    title: '🏎️ سباقات',           orderCol: 'created_at',  category: 'racing' },
+];
+const GAME_SECTION_ROW_LIMIT = 12;
+
+async function loadGameSections() {
+  const container = document.getElementById('gamesSections');
+  const grid = document.getElementById('gamesGrid');
+  if (!container) return;
+  grid?.classList.add('hidden');
+  container.classList.remove('hidden');
+  container.innerHTML = `<div class="loader-state"><div class="loader-spinner"></div><span>جاري التحميل...</span></div>`;
+
+  const engine = document.getElementById('filterEngine')?.value || '';
+
+  const results = await Promise.all(GAME_SECTION_DEFS.map(async (sec) => {
+    let q = sb.from('games').select('*').order(sec.orderCol, { ascending: false });
+    if (sec.category) q = q.eq('category', sec.category);
+    if (engine) q = q.eq('engine', engine);
+    const { data, error } = await q.limit(GAME_SECTION_ROW_LIMIT);
+    return { ...sec, games: (!error && data) ? data : [] };
+  }));
+
+  // جلب أسماء الرافعين لجميع الألعاب دفعة واحدة
+  const allGames = results.flatMap(r => r.games);
+  if (allGames.length > 0) {
+    const uploaderIds = [...new Set(allGames.map(g => g.uploader_id).filter(Boolean))];
+    const { data: profData } = await sb.from('profiles').select('id, username, avatar_url').in('id', uploaderIds);
+    const profMap = {};
+    (profData || []).forEach(p => { profMap[p.id] = p; });
+    allGames.forEach(g => { g.profiles = profMap[g.uploader_id] || null; });
+  }
+
+  const count = document.getElementById('gameCount');
+  if (count) count.textContent = `${allGames.length} لعبة`;
+
+  const visibleSections = results.filter(r => r.games.length > 0);
+  if (visibleSections.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🎮</div><p>لا توجد ألعاب بعد. كن أول من يرفع!</p></div>`;
+    return;
+  }
+
+  container.innerHTML = visibleSections.map(sec => gameRowSectionHTML(sec)).join('');
+}
+
+function gameRowSectionHTML(sec) {
+  const rowId = `row-${sec.key}`;
+  return `
+<div class="games-row-section">
+  <div class="games-row-header">
+    <h3 class="games-row-title">${sec.title}</h3>
+    <div class="games-row-nav">
+      <button class="row-nav-btn" onclick="scrollRow('${rowId}','prev')" aria-label="السابق">‹</button>
+      <button class="row-nav-btn" onclick="scrollRow('${rowId}','next')" aria-label="التالي">›</button>
+    </div>
+  </div>
+  <div class="games-row-track" id="${rowId}">
+    ${sec.games.map(g => gameCardHTML(g)).join('')}
+  </div>
+</div>`;
+}
+
+function scrollRow(rowId, dir) {
+  const track = document.getElementById(rowId);
+  if (!track) return;
+  const amount = Math.round(track.clientWidth * 0.9) || 600;
+  const delta = dir === 'next' ? -amount : amount;
+  track.scrollBy({ left: delta, behavior: 'smooth' });
+}
+
+// ===== BROWSE REFRESH (يختار بين عرض الشُعَب أو الشبكة المفلترة) =====
+function refreshBrowse() {
+  if (currentCategory) {
+    loadGames();
+  } else {
+    loadGameSections();
+  }
+}
+
 async function loadLikedGames() {
   if (!currentUser) return;
   const { data } = await sb.from('game_likes').select('game_id').eq('user_id', currentUser.id);
@@ -237,7 +327,7 @@ function filterByCategory(cat, btn) {
   btn.classList.add('active');
   const title = document.getElementById('browseTitle');
   if (title) title.textContent = cat ? `ألعاب: ${btn.textContent}` : 'الألعاب المتاحة';
-  loadGames();
+  refreshBrowse();
 }
 
 // ===== GAME CARD HTML =====
@@ -269,6 +359,125 @@ function gameCardHTML(g, showDelete = false) {
       </div>
     </div>
   </div>`;
+}
+
+// ===== FEATURED GAMES SLIDER =====
+let sliderGames = [];
+let sliderIndex = 0;
+let sliderTimer = null;
+const SLIDER_INTERVAL = 6000; // ms
+
+async function loadFeaturedSlider() {
+  const track = document.getElementById('sliderTrack');
+  const dotsEl = document.getElementById('sliderDots');
+  if (!track) return;
+
+  const { data, error } = await sb.from('games')
+    .select('*')
+    .not('thumbnail_url', 'is', null)
+    .order('likes_count', { ascending: false })
+    .limit(6);
+
+  if (error || !data || data.length === 0) {
+    document.getElementById('featuredSlider')?.classList.add('hidden');
+    return;
+  }
+
+  sliderGames = data;
+  track.innerHTML = data.map((g, i) => sliderSlideHTML(g, i)).join('');
+  if (dotsEl) {
+    dotsEl.innerHTML = data.map((_, i) =>
+      `<button class="slider-dot${i===0?' active':''}" onclick="sliderGoTo(${i})" aria-label="الشريحة ${i+1}"></button>`
+    ).join('');
+  }
+
+  sliderIndex = 0;
+  startSliderAutoplay();
+
+  const sliderEl = document.getElementById('featuredSlider');
+  sliderEl.addEventListener('mouseenter', stopSliderAutoplay);
+  sliderEl.addEventListener('mouseleave', startSliderAutoplay);
+  initSliderSwipe(sliderEl);
+}
+
+function sliderSlideHTML(g, i) {
+  const cat = categoryLabel(g.category);
+  return `
+<div class="slide${i===0?' active':''}" data-index="${i}" onclick="openGame('${g.id}')">
+  <div class="slide-bg-wrap"><img class="slide-bg" src="${g.thumbnail_url}" alt="${escHtml(g.title)}" loading="${i===0?'eager':'lazy'}"/></div>
+  <div class="slide-overlay"></div>
+  <div class="slide-content">
+    <div class="slide-badges">
+      <span class="badge engine-badge">${engineEmoji(g.engine)} ${(g.engine||'').toUpperCase()}</span>
+      ${cat ? `<span class="badge cat-badge">${cat}</span>` : ''}
+    </div>
+    <h2 class="slide-title">${escHtml(g.title)}</h2>
+    <p class="slide-desc">${escHtml(g.description || '')}</p>
+    <div class="slide-actions">
+      <button class="btn-primary large" onclick="event.stopPropagation(); openGame('${g.id}')">▶ العب الآن</button>
+      <span class="slide-likes">❤ ${g.likes_count || 0}</span>
+    </div>
+  </div>
+</div>`;
+}
+
+function categoryLabel(cat) {
+  return ({ action:'أكشن', puzzle:'ألغاز', adventure:'مغامرات', strategy:'استراتيجية', racing:'سباقات', other:'أخرى' })[cat] || '';
+}
+
+function goToSlide(i, userInitiated = false) {
+  if (!sliderGames.length) return;
+  const slides = document.querySelectorAll('#sliderTrack .slide');
+  const dots = document.querySelectorAll('#sliderDots .slider-dot');
+  slides[sliderIndex]?.classList.remove('active');
+  dots[sliderIndex]?.classList.remove('active');
+  sliderIndex = ((i % sliderGames.length) + sliderGames.length) % sliderGames.length;
+  slides[sliderIndex]?.classList.add('active');
+  dots[sliderIndex]?.classList.add('active');
+  if (userInitiated) startSliderAutoplay();
+  else restartSliderProgress();
+}
+
+function sliderNext() { goToSlide(sliderIndex + 1, true); }
+function sliderPrev() { goToSlide(sliderIndex - 1, true); }
+function sliderGoTo(i) { goToSlide(i, true); }
+
+function startSliderAutoplay() {
+  stopSliderAutoplay();
+  sliderTimer = setInterval(() => goToSlide(sliderIndex + 1), SLIDER_INTERVAL);
+  restartSliderProgress();
+}
+function stopSliderAutoplay() {
+  if (sliderTimer) clearInterval(sliderTimer);
+  sliderTimer = null;
+  const bar = document.getElementById('sliderProgressBar');
+  if (bar) bar.classList.remove('animate');
+}
+function restartSliderProgress() {
+  const bar = document.getElementById('sliderProgressBar');
+  if (!bar) return;
+  bar.classList.remove('animate');
+  void bar.offsetWidth; // إعادة تشغيل الأنيميشن
+  bar.style.animationDuration = `${SLIDER_INTERVAL}ms`;
+  bar.classList.add('animate');
+}
+
+function initSliderSwipe(el) {
+  let startX = 0, startY = 0, dragging = false;
+  el.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    dragging = true;
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    if (!dragging) return;
+    dragging = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) sliderPrev(); else sliderNext();
+    }
+  }, { passive: true });
 }
 
 // ===== UPLOAD: DRAG & DROP & FILE =====
@@ -665,7 +874,8 @@ async function uploadGame() {
     pendingUpload = null;
     showMsg('uploadMsg', `🎉 تم نشر "${title}" بنجاح!`, 'success');
     clearUploadForm();
-    await loadGames();
+    await refreshBrowse();
+    loadFeaturedSlider();
     showToast('تم نشر اللعبة! 🚀');
     setTimeout(() => showSection('browse'), 1800);
 
@@ -691,10 +901,8 @@ async function deleteGame(e, id) {
   if (document.getElementById('myGamesGrid')) {
     if (typeof loadMyGamesPage === 'function') await loadMyGamesPage();
   }
-  await loadGames();
+  await refreshBrowse();
 }
-
-// ===== GAME MODAL =====
 // ===== LOAD GAME IN FRAME =====
 // يجلب HTML ويضعه في srcdoc مباشرة — يحل مشكلة Supabase Content-Type
 async function loadGameInFrame(frame, gameUrl) {
@@ -797,7 +1005,7 @@ async function toggleLike() {
   }
   await sb.from('games').update({ likes_count: currentGame.likes_count }).eq('id', id);
   document.getElementById('likeCount').textContent = currentGame.likes_count;
-  await loadGames();
+  if (currentCategory) loadGames();
 }
 
 function shareGame() {
@@ -904,10 +1112,13 @@ function copyEmbed() {
 // ===== SEARCH =====
 async function performSearch() {
   const q = document.getElementById('searchInput')?.value.trim();
-  if (!q) return loadGames();
+  if (!q) return refreshBrowse();
   showSection('browse');
   const grid = document.getElementById('gamesGrid');
+  const sections = document.getElementById('gamesSections');
   if (!grid) return;
+  sections?.classList.add('hidden');
+  grid.classList.remove('hidden');
   grid.innerHTML = `<div class="loader-state"><div class="loader-spinner"></div><span>جاري البحث...</span></div>`;
   const { data } = await sb.from('games').select('*')
     .or(`title.ilike.%${q}%,description.ilike.%${q}%`).order('created_at', { ascending: false });
@@ -939,7 +1150,9 @@ function showSection(name, btn) {
   }
   const hero = document.getElementById('heroBanner');
   if (hero) hero.style.display = name === 'browse' ? 'flex' : 'none';
-  if (name === 'browse') loadGames();
+  const slider = document.getElementById('featuredSlider');
+  if (slider) slider.style.display = name === 'browse' ? 'block' : 'none';
+  if (name === 'browse') refreshBrowse();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
