@@ -1279,20 +1279,23 @@ function setOg(prop, content) {
 })();
 
 async function loginWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
+  const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin
+      redirectTo: `${window.location.origin}/dashboard`, // send them somewhere specific
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent', // forces refresh token
+      }
     }
   });
 
   if (error) {
-    alert(error.message);
+    console.error('Google login failed:', error.message);
+    // Use a toast instead of alert for better UX
+    return;
   }
-}
-supabase.auth.signInWithOAuth({
-  provider: "google"
-})
-function loginWithGoogle() {
-  alert("تم الضغط على الزر");
+  
+  // data.url exists if redirect didn't happen yet
+  // Usually you don't need to do anything here
 }
