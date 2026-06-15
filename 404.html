@@ -109,8 +109,15 @@
 <div class="toast" id="toast"></div>
 
 <script>
-function toggleSidebar() {
-  document.getElementById('sidebar')?.classList.toggle('open');
+const pathParts = window.location.pathname.split('/').filter(Boolean);
+
+if (!slug) {
+  if (pathParts.length === 1) {
+    slug = pathParts[0];
+  } else {
+    showError();
+    return;
+  }
 }
 </script>
 
