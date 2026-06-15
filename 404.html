@@ -109,6 +109,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
+  
 const pathParts = window.location.pathname.split('/').filter(Boolean);
 
 if (!slug) {
@@ -120,7 +121,11 @@ if (!slug) {
   }
 }
 </script>
-
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar')?.classList.toggle('open');
+}
+</script>
 
 </body>
 </html>
