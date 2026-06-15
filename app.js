@@ -1266,14 +1266,3 @@ function setOg(prop, content) {
   if (gameId) { await checkSession(); await openGame(gameId); }
 })();
 
-<div class="game-card" onclick="openGame(g)">
-  <img class="card-thumb" src="${g.thumbnail_url}" alt="${g.title}" loading="lazy"/>
-  <span class="badge-top">${g.category || ''}</span>
-  <button class="card-like" onclick="event.stopPropagation(); toggleLike(g.id)">
-    🤍 ${g.likes_count || 0}
-  </button>
-  <div class="card-info">
-    <div class="card-title">${g.title}</div>
-    <div class="card-desc">${(g.description || '').slice(0, 60)}…</div>
-  </div>
-</div>
