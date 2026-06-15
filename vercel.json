@@ -9,8 +9,8 @@
       "destination": "/game.html?slug=:slug"
     },
     {
-      "source": "/:path*",
-      "destination": "/404.html"
+     "source": "/:path*",
+      "destination": "/game.html"
     }
   ]
 }
