@@ -1261,8 +1261,9 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
 
 
 .error-image{
-  width: min(90vw, 900px);
-  max-height: 60vh;
+  width: clamp(220px, 35vw, 350px);
+  height: auto;
+  margin-bottom: 20px;
+  border-radius: 16px;
   object-fit: contain;
-  margin-bottom: 30px;
 }
