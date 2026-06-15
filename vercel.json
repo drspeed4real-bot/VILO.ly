@@ -7,10 +7,6 @@
     {
       "source": "/:slug",
       "destination": "/game.html?slug=:slug"
-    },
-    {
-     "source": "/:path*",
-      "destination": "https://vilo-ly.vercel.app/game.html"
     }
   ]
 }
