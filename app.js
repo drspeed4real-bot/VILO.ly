@@ -1293,3 +1293,6 @@ async function loginWithGoogle() {
 supabase.auth.signInWithOAuth({
   provider: "google"
 })
+function loginWithGoogle() {
+  alert("تم الضغط على الزر");
+}
