@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#0d0d0f"/>
 
   <title id="pageTitle">GameVault — تحميل اللعبة</title>
-  <meta name="description" id="metaDesc" content="العب مجاناً على GameVault"/>
-  <meta name="keywords" id="metaKeywords" content="العاب, gamevault"/>
+  <meta name="description" id="metaDesc" content="العب مجاناً على VILO.LY"/>
+  <meta name="keywords" id="metaKeywords" content="العاب, VILO.LY"/>
   <meta name="robots" content="index, follow"/>
   <link rel="canonical" id="canonical" href=""/>
 
@@ -82,7 +82,7 @@
       <button class="topbar-menu-btn" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title" id="topbarTitle">GameVault</div>
       <div class="topbar-right">
-        <a href="index.html" class="btn-ghost small">← كل الألعاب</a>
+        <a href="https://vilo-ly.vercel.app/index.html" class="btn-ghost small">← كل الألعاب</a>
       </div>
     </header>
 
@@ -94,18 +94,28 @@
         <span>جاري التحميل...</span>
       </div>
 
-      <!-- ERROR / NOT FOUND -->
-      <div id="errorState" class="empty-fullpage hidden">
-        <div class="empty-icon-big">😕</div>
-        <h2>اللعبة غير موجودة</h2>
-        <p>الرابط غير صحيح أو تم حذف هذه اللعبة</p>
-        <a href="index.html" class="btn-primary">تصفح الألعاب</a>
-      </div>
+<!-- ERROR / NOT FOUND -->
+<div id="errorState" class="empty-fullpage hidden">
+
+  <img
+    src="https://odceujftrdympevtgknl.supabase.co/storage/v1/object/public/thumbnails/21f55b24-4ff2-4c6a-9f18-83ddc1e4a382.png"
+    alt="Game Not Found"
+    class="error-image"
+  >
+
+  <h2>SORY BODY </h2>
+  <p>The link is incorrect or this game has been removed.</p>
+
+  <a href="https://vilo-ly.vercel.app/index.html" class="btn-primary">
+    تصفح الألعاب
+  </a>
+
+</div>
 
       <!-- GAME CONTENT -->
       <div id="gameContent" class="hidden">
 
-        <a href="index.html" class="game-page-back">→ تصفح كل الألعاب</a>
+        <a href="https://vilo-ly.vercel.app/index.html" class="game-page-back">→ تصفح كل الألعاب</a>
 
         <div class="game-page-card" id="gamePageCard">
           <!-- شريط التحكم -->
