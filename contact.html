@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us | VILO.LY Games</title>
     <meta name="description" content="Contact VILO.LY for game support, bug reports, partnerships, or feedback.">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #7c3aed;
@@ -15,14 +16,11 @@
             --muted: #9ca3af;
             --accent: #22d3ee;
             --success: #10b981;
+            --error: #ef4444;
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
             background: var(--bg);
@@ -30,40 +28,23 @@
             line-height: 1.6;
             min-height: 100vh;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        header {
-            padding: 24px 0;
-            border-bottom: 1px solid #2a2a3a;
-        }
-        
-        .logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--text);
-            text-decoration: none;
-        }
-        
-        .logo span {
-            color: var(--primary);
-        }
-        
-        main {
-            padding: 60px 0;
-        }
-        
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+        header { padding: 24px 0; border-bottom: 1px solid #2a2a3a; }
+
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--text); text-decoration: none; }
+        .logo span { color: var(--primary); }
+
+        main { padding: 60px 0; }
+
         .contact-grid {
             display: grid;
             grid-template-columns: 1fr 1.2fr;
             gap: 48px;
             align-items: start;
         }
-        
+
         h1 {
             font-size: 2.5rem;
             margin-bottom: 16px;
@@ -72,61 +53,33 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
-        .subtitle {
-            color: var(--muted);
-            margin-bottom: 32px;
-            font-size: 1.1rem;
-        }
-        
+
+        .subtitle { color: var(--muted); margin-bottom: 32px; font-size: 1.1rem; }
+
         .contact-info {
             background: var(--card);
             padding: 32px;
             border-radius: 16px;
             border: 1px solid #2a2a3a;
         }
-        
-        .info-item {
-            margin-bottom: 28px;
-        }
-        
-        .info-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .info-item h3 {
-            font-size: 1.1rem;
-            margin-bottom: 8px;
-            color: var(--accent);
-        }
-        
-        .info-item p, .info-item a {
-            color: var(--muted);
-            text-decoration: none;
-        }
-        
-        .info-item a:hover {
-            color: var(--primary);
-        }
-        
+
+        .info-item { margin-bottom: 28px; }
+        .info-item:last-child { margin-bottom: 0; }
+        .info-item h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--accent); }
+        .info-item p, .info-item a { color: var(--muted); text-decoration: none; }
+        .info-item a:hover { color: var(--primary); }
+
         .contact-form {
             background: var(--card);
             padding: 32px;
             border-radius: 16px;
             border: 1px solid #2a2a3a;
         }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-        
+
+        .form-group { margin-bottom: 20px; }
+
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.95rem; }
+
         input, select, textarea {
             width: 100%;
             padding: 12px 16px;
@@ -136,18 +89,18 @@
             color: var(--text);
             font-size: 1rem;
             transition: border 0.2s;
+            font-family: inherit;
         }
-        
+
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--primary);
         }
-        
-        textarea {
-            resize: vertical;
-            min-height: 140px;
-        }
-        
+
+        select option { background: #1a1a24; }
+
+        textarea { resize: vertical; min-height: 140px; }
+
         .btn {
             background: var(--primary);
             color: white;
@@ -157,30 +110,27 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, opacity 0.2s;
             width: 100%;
         }
-        
-        .btn:hover {
-            background: var(--primary-dark);
+
+        .btn:hover:not(:disabled) { background: var(--primary-dark); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .msg {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: none;
         }
-        
-        .social-links {
-            display: flex;
-            gap: 16px;
-            margin-top: 24px;
-        }
-        
-        .social-links a {
-            color: var(--muted);
-            font-size: 1.5rem;
-            transition: color 0.2s;
-        }
-        
-        .social-links a:hover {
-            color: var(--primary);
-        }
-        
+        .msg.success { background: rgba(16,185,129,.15); color: var(--success); border: 1px solid rgba(16,185,129,.3); display: block; }
+        .msg.error   { background: rgba(239,68,68,.15);  color: var(--error);   border: 1px solid rgba(239,68,68,.3);  display: block; }
+
+        .social-links { display: flex; gap: 16px; margin-top: 24px; }
+        .social-links a { color: var(--muted); font-size: 1rem; text-decoration: none; transition: color 0.2s; }
+        .social-links a:hover { color: var(--primary); }
+
         footer {
             text-align: center;
             padding: 32px 0;
@@ -188,115 +138,165 @@
             color: var(--muted);
             font-size: 0.9rem;
         }
-        
+
         @media (max-width: 768px) {
-            .contact-grid {
-                grid-template-columns: 1fr;
-                gap: 32px;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            main {
-                padding: 40px 0;
-            }
+            .contact-grid { grid-template-columns: 1fr; gap: 32px; }
+            h1 { font-size: 2rem; }
+            main { padding: 40px 0; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <a href="/" class="logo">VILO<span>.LY</span></a>
-        </div>
-    </header>
 
-    <main>
-        <div class="container">
-            <div class="contact-grid">
-                <div>
-                    <h1>Get in Touch</h1>
-                    <p class="subtitle">
-                        Stuck on a level? Found a bug? Want to partner with us? We’re here for players and devs alike.
-                    </p>
-                    
-                    <div class="contact-info">
-                        <div class="info-item">
-                            <h3>Player Support</h3>
-                            <p>Having issues with gameplay, accounts, or purchases?</p>
-                            <a href="mailto:support@vilo.ly">support@vilo.ly</a>
-                        </div>
-                        
-                        <div class="info-item">
-                            <h3>Business & Partnerships</h3>
-                            <p>Let's build something awesome together.</p>
-                            <a href="mailto:hello@vilo.ly">hello@vilo.ly</a>
-                        </div>
-                        
-                        <div class="info-item">
-                            <h3>Response Time</h3>
-                            <p>We reply to all inquiries within 24-48 hours.</p>
-                        </div>
-                        
-                        <div class="info-item">
-                            <h3>Follow Us</h3>
-                            <div class="social-links">
-                                <a href="https://discord.gg/viloly" aria-label="Discord">Discord</a>
-                                <a href="https://twitter.com/viloly" aria-label="Twitter">Twitter</a>
-                                <a href="https://instagram.com/viloly" aria-label="Instagram">Instagram</a>
-                            </div>
+<header>
+    <div class="container">
+        <a href="/" class="logo">VILO<span>.LY</span></a>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+        <div class="contact-grid">
+
+            <!-- Left: Info -->
+            <div>
+                <h1>Get in Touch</h1>
+                <p class="subtitle">
+                    Stuck on a level? Found a bug? Want to partner with us? We're here for players and devs alike.
+                </p>
+
+                <div class="contact-info">
+                    <div class="info-item">
+                        <h3>Player Support</h3>
+                        <p>Having issues with gameplay, accounts, or purchases?</p>
+                        <a href="mailto:support@vilo.ly">support@vilo.ly</a>
+                    </div>
+                    <div class="info-item">
+                        <h3>Business &amp; Partnerships</h3>
+                        <p>Let's build something awesome together.</p>
+                        <a href="mailto:hello@vilo.ly">hello@vilo.ly</a>
+                    </div>
+                    <div class="info-item">
+                        <h3>Response Time</h3>
+                        <p>We reply to all inquiries within 24–48 hours.</p>
+                    </div>
+                    <div class="info-item">
+                        <h3>Follow Us</h3>
+                        <div class="social-links">
+                            <a href="https://discord.gg/viloly" target="_blank">Discord</a>
+                            <a href="https://twitter.com/viloly" target="_blank">Twitter</a>
+                            <a href="https://instagram.com/viloly" target="_blank">Instagram</a>
                         </div>
                     </div>
                 </div>
-                
-                <div class="contact-form">
-                    <form action="https://formspree.io/f/xeewvknj" method="POST">
-                        <div class="form-group">
-                            <label for="name">Your Name</label>
-                            <input type="text" id="name" name="name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="topic">What's this about?</label>
-                            <select id="topic" name="topic" required>
-                                <option value="">Select a topic</option>
-                                <option value="bug">Bug Report</option>
-                                <option value="gameplay">Gameplay Help</option>
-                                <option value="account">Account Issue</option>
-                                <option value="payment">Payment Problem</option>
-                                <option value="feedback">Game Feedback</option>
-                                <option value="business">Business Inquiry</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="game">Which Game?</label>
-                            <input type="text" id="game" name="game" placeholder="Optional">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="message">Message</label>
-                            <textarea id="message" name="message" required placeholder="Tell us what happened, what you expected, and any error codes you saw..."></textarea>
-                        </div>
-                        
-                        <button type="submit" class="btn">Send Message</button>
-                    </form>
-                </div>
             </div>
+
+            <!-- Right: Contact Form (no <form> tag) -->
+            <div class="contact-form">
+                <div class="form-group">
+                    <label for="name">Your Name</label>
+                    <input type="text" id="name" placeholder="John Doe">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="you@example.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="topic">What's this about?</label>
+                    <select id="topic">
+                        <option value="">Select a topic</option>
+                        <option value="bug">Bug Report</option>
+                        <option value="gameplay">Gameplay Help</option>
+                        <option value="account">Account Issue</option>
+                        <option value="payment">Payment Problem</option>
+                        <option value="feedback">Game Feedback</option>
+                        <option value="business">Business Inquiry</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="game">Which Game?</label>
+                    <input type="text" id="game" placeholder="Optional">
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" placeholder="Tell us what happened, what you expected, and any error codes you saw..."></textarea>
+                </div>
+
+                <button class="btn" id="submitBtn" onclick="sendMessage()">Send Message</button>
+                <div class="msg" id="formMsg"></div>
+            </div>
+
         </div>
-    </main>
-    
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 VILO.LY. All rights reserved. Made for gamers, by gamers.</p>
-        </div>
-    </footer>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        <p>&copy; 2026 VILO.LY. All rights reserved. Made for gamers, by gamers.</p>
+    </div>
+</footer>
+
+<script>
+    // ===== SUPABASE INIT =====
+    const { createClient } = supabase;
+    const sb = createClient(
+        'https://odceujftrdympevtgknl.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kY2V1amZ0cmR5bXBldnRna25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTU0MTgsImV4cCI6MjA5NjE3MTQxOH0.cha9-spThAN6ZIgqDii_58suKnyHa-QInbO3wB4trJI'
+    );
+
+    function showMsg(text, type) {
+        const el = document.getElementById('formMsg');
+        el.textContent = text;
+        el.className = 'msg ' + type;
+    }
+
+    async function sendMessage() {
+        const name    = document.getElementById('name').value.trim();
+        const email   = document.getElementById('email').value.trim();
+        const topic   = document.getElementById('topic').value;
+        const game    = document.getElementById('game').value.trim();
+        const message = document.getElementById('message').value.trim();
+
+        // Validation
+        if (!name)    return showMsg('Please enter your name.', 'error');
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+                      return showMsg('Please enter a valid email address.', 'error');
+        if (!topic)   return showMsg('Please select a topic.', 'error');
+        if (!message) return showMsg('Please write a message.', 'error');
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+
+        const { error } = await sb.from('contact_messages').insert([{
+            name,
+            email,
+            topic,
+            game: game || null,
+            message,
+            created_at: new Date().toISOString()
+        }]);
+
+        btn.disabled = false;
+        btn.textContent = 'Send Message';
+
+        if (error) {
+            console.error(error);
+            showMsg('Something went wrong: ' + error.message, 'error');
+        } else {
+            showMsg('✅ Message sent! We\'ll get back to you within 24–48 hours.', 'success');
+            // Clear fields
+            ['name','email','topic','game','message'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+        }
+    }
+</script>
+
 </body>
 </html>
