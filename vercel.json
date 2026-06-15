@@ -10,7 +10,7 @@
     },
     {
      "source": "/:path*",
-      "destination": "/game.html"
+      "destination": "https://vilo-ly.vercel.app/game.html"
     }
   ]
 }
