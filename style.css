@@ -1259,32 +1259,10 @@ input, textarea, select { font-family: var(--font-body); direction: rtl; }
 }
 .game-page-card.game-modal-fullscreen { z-index: 2000; background: #000; }
 
-.empty-fullpage{
-  min-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 20px;
-}
 
 .error-image{
-  width: 100%;
-  max-width: 700px;
-  height: auto;
-  margin-bottom: 24px;
-  border-radius: 16px;
+  width: min(90vw, 900px);
+  max-height: 60vh;
   object-fit: contain;
+  margin-bottom: 30px;
 }
-
-.empty-fullpage h2{
-  margin: 0 0 10px;
-  font-size: 2rem;
-}
-
-.empty-fullpage p{
-  margin-bottom: 20px;
-  opacity: .8;
-}
-
