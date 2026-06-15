@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta property="og:image" content="https://vilo-ly.vercel.app/api/og/default">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0d0d0f"/>
+
+  <title id="pageTitle">ERROR 404</title>
+ 
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" id="canonical" href=""/>
+
+
+
+  <script type="application/ld+json" id="schemaScript">{}</script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- SIDEBAR (same as the rest of the site) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <a href="index.html" class="logo-link">
+        <span class="logo-hex">⬡</span>
+        <span class="logo-text">GAME<span class="logo-accent">VAULT</span></span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">🎮</span>
+        <span class="nav-label">تصفح الألعاب</span>
+      </a>
+      <a href="index.html#upload" class="nav-item" onclick="localStorage.setItem('openUpload','1')">
+        <span class="nav-icon">⬆</span>
+        <span class="nav-label">ارفع لعبة</span>
+      </a>
+      <a href="profile.html" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">ملفي الشخصي</span>
+      </a>
+    </nav>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-bottom">
+      <div id="sidebarAuth">
+        <button class="btn-outline full-w" onclick="window.location='index.html'">دخول / تسجيل</button>
+      </div>
+      <div id="sidebarUser" class="hidden">
+        <div class="sidebar-user-card" onclick="goToProfile()">
+          <div class="sidebar-avatar" id="sidebarAvatar"></div>
+          <div class="sidebar-user-info">
+            <span class="sidebar-username" id="sidebarUsername">مستخدم</span>
+            <span class="sidebar-role">لاعب</span>
+          </div>
+          <span class="sidebar-arrow">›</span>
+        </div>
+        <button class="btn-ghost full-w mt8 small" onclick="logout()">تسجيل الخروج</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN PANEL -->
+  <div class="main-panel">
+    <header class="topbar">
+      <button class="topbar-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="topbarTitle">GameVault</div>
+      <div class="topbar-right">
+        <a href="https://vilo-ly.vercel.app/index.html" class="btn-ghost small">← كل الألعاب</a>
+      </div>
+    </header>
+
+    <div class="content-area">
+
+      <!-- LOADING -->
+ 
+<!-- ERROR / NOT FOUND -->
+<div id="errorState" class="empty-fullpage">
+
+  <img
+    src="https://odceujftrdympevtgknl.supabase.co/storage/v1/object/public/thumbnails/21f55b24-4ff2-4c6a-9f18-83ddc1e4a382.png"
+    alt="Game Not Found"
+    class="error-image"
+  >
+
+  <h2>SORY BODY </h2>
+  <p>The link is incorrect or this game has been removed.</p>
+
+  <a href="https://vilo-ly.vercel.app/index.html" class="btn-primary">
+    تصفح الألعاب
+  </a>
+
+</div>
+
+    
+
+
+      </div><!-- /gameContent -->
+
+    </div><!-- /content-area -->
+  </div><!-- /main-panel -->
+</div><!-- /app-shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar')?.classList.toggle('open');
+}
+</script>
+
+
+</body>
+</html>
