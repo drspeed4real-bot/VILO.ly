@@ -1278,24 +1278,16 @@ function setOg(prop, content) {
   if (gameId) { await checkSession(); await openGame(gameId); }
 })();
 
+// ✅ هذه هي الصحيحة — احتفظ بها فقط
 async function loginWithGoogle() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${window.location.origin}/dashboard`, // send them somewhere specific
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent', // forces refresh token
-      }
+      redirectTo: window.location.origin
     }
   });
 
   if (error) {
-    console.error('Google login failed:', error.message);
-    // Use a toast instead of alert for better UX
-    return;
+    alert(error.message);
   }
-  
-  // data.url exists if redirect didn't happen yet
-  // Usually you don't need to do anything here
 }
