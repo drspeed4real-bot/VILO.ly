@@ -1290,3 +1290,6 @@ async function loginWithGoogle() {
     alert(error.message);
   }
 }
+supabase.auth.signInWithOAuth({
+  provider: "google"
+})
