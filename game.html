@@ -6,15 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="theme-color" content="#0d0d0f"/>
 
-  <title id="pageTitle">GameVault — تحميل اللعبة</title>
+  <title id="pageTitle">VILO.LY — تحميل اللعبة</title>
   <meta name="description" id="metaDesc" content="العب مجاناً على VILO.LY"/>
   <meta name="keywords" id="metaKeywords" content="العاب, VILO.LY"/>
   <meta name="robots" content="index, follow"/>
   <link rel="canonical" id="canonical" href=""/>
 
   <meta property="og:type" content="website"/>
-  <meta property="og:site_name" content="GameVault"/>
-  <meta property="og:title" id="ogTitle" content="GameVault"/>
+  <meta property="og:site_name" content="VILO.LYt"/>
+  <meta property="og:title" id="ogTitle" content="VILO.LY"/>
   <meta property="og:description" id="ogDesc" content=""/>
   <meta property="og:image" id="ogImage" content=""/>
   <meta property="og:url" id="ogUrl" content=""/>
@@ -104,7 +104,7 @@
   >
 
   <h2>SORY BODY </h2>
-  <p>The link is incorrect or this game has been removed.</p>
+  <p><h1>The link is incorrect or this game has been removed.</h1>h1></p>
 
   <a href="https://vilo-ly.vercel.app/index.html" class="btn-primary">
     تصفح الألعاب
@@ -272,7 +272,7 @@ function toggleStandaloneView() {
 // ===== SEO =====
 function injectSEO(g) {
   const url = window.location.href;
-  const title = `${g.title} — العب مجاناً | GameVault`;
+  const title = `${g.title} — العب مجاناً | VILO.LY`;
 
   document.title = title;
   document.getElementById('pageTitle').textContent = title;
@@ -281,7 +281,7 @@ function injectSEO(g) {
   document.getElementById('metaDesc').content = desc;
 
   const tagsList = (g.tags || []).join(', ');
-  document.getElementById('metaKeywords').content = [tagsList, g.title, 'العاب', 'gamevault'].filter(Boolean).join(', ');
+  document.getElementById('metaKeywords').content = [tagsList, g.title, 'العاب', 'VILO.LY'].filter(Boolean).join(', ');
 
   document.getElementById('canonical').href = url;
 
