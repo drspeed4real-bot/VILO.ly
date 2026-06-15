@@ -43,6 +43,12 @@ async function checkSession() {
 
 // ===== AUTH =====
 async function register() {
+  const captcha = grecaptcha.getResponse();
+
+  if (!captcha) {
+    alert("يرجى إكمال التحقق الأمني");
+    return;
+  }
   const username = document.getElementById('regUsername').value.trim();
   const email    = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
@@ -61,8 +67,15 @@ async function register() {
   showToast(`مرحباً ${username}! 🎮`);
 }
 
+
 async function login() {
-  const email    = document.getElementById('loginEmail').value.trim();
+  const captcha = grecaptcha.getResponse();
+
+  if (!captcha) {
+    alert("يرجى إكمال التحقق الأمني");
+    return;
+  }
+   const email    = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   if (!email || !password) return showMsg('loginMsg','يرجى إدخال البيانات','error');
 
@@ -76,7 +89,6 @@ async function login() {
   showToast(`أهلاً بعودتك ${currentProfile?.username || ''} 👋`);
   await loadLikedGames();
 }
-
 async function logout() {
   await sb.auth.signOut();
   currentUser = null; currentProfile = null;
