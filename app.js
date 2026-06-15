@@ -2,7 +2,7 @@
 const { createClient } = supabase;
 const sb = createClient(
   'https://odceujftrdympevtgknl.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kY2V1amZ0cmR5bXBldnRna25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTU0MTgsImV4cCI6MjA5NjE3MTQxOH0.cha9-spThAN6ZIgqDii_58suKnyHa-QInbO3wB4trJI'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kY2V1amZ0cmR5bXBldnRna25sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1OTU0MTgsImV4cCI6MjA5NjE3MTQxOH0.cha9-spThAN6ZIgqDii_58suKnyHa-QI1t1lYz97Nxw'
 );
 
 // ===== STATE =====
@@ -89,6 +89,7 @@ async function login() {
   showToast(`أهلاً بعودتك ${currentProfile?.username || ''} 👋`);
   await loadLikedGames();
 }
+
 async function logout() {
   await sb.auth.signOut();
   currentUser = null; currentProfile = null;
@@ -97,6 +98,67 @@ async function logout() {
   showSection('browse');
   showToast('تم تسجيل الخروج');
 }
+
+// ===== GOOGLE LOGIN =====
+async function loginWithGoogle() {
+  try {
+    showMsg('loginMsg', '⏳ جاري الاتصال بـ Google...', 'success');
+    
+    const { data, error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + window.location.pathname
+      }
+    });
+
+    if (error) {
+      console.error('Google auth error:', error);
+      showMsg('loginMsg', '❌ خطأ: ' + error.message, 'error');
+      return;
+    }
+  } catch (err) {
+    console.error('Google login exception:', err);
+    showMsg('loginMsg', '❌ حدث خطأ: ' + (err.message || 'خطأ غير معروف'), 'error');
+  }
+}
+
+// ===== HANDLE OAUTH CALLBACK =====
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  
+  if (code) {
+    // OAuth callback - get session
+    try {
+      const { data: { session }, error } = await sb.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        await loadProfile();
+        updateSidebarUser();
+        await loadLikedGames();
+        closeModal('loginModal');
+        closeModal('registerModal');
+        showToast(`أهلاً بك ${currentProfile?.username || currentUser.email} 👋`);
+        
+        // Create profile if doesn't exist
+        const { data: prof } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (!prof) {
+          const username = currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+          await sb.from('profiles').upsert({ 
+            id: currentUser.id, 
+            username, 
+            email: currentUser.email,
+            avatar_url: currentUser.user_metadata?.avatar_url,
+            created_at: new Date().toISOString() 
+          });
+          await loadProfile();
+        }
+      }
+    } catch (err) {
+      console.error('OAuth callback error:', err);
+    }
+  }
+});
 
 function requireAuth(cb) {
   if (!currentUser) { showModal('loginModal'); return; }
@@ -1269,30 +1331,4 @@ function setOg(prop, content) {
   let el = document.querySelector(`meta[property="og:${prop}"]`);
   if (!el) { el = document.createElement('meta'); el.setAttribute('property',`og:${prop}`); document.head.appendChild(el); }
   el.content = content || '';
-}
-
-// ===== DEEP LINK =====
-(async () => {
-  const params = new URLSearchParams(window.location.search);
-  const gameId = params.get('game');
-  if (gameId) { await checkSession(); await openGame(gameId); }
-})();
-
-async function loginWithGoogle() {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: window.location.origin
-    }
-  });
-
-  if (error) {
-    alert(error.message);
-  }
-}
-supabase.auth.signInWithOAuth({
-  provider: "google"
-})
-function loginWithGoogle() {
-  alert("تم الضغط على الزر");
 }
