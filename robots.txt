@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vilo-ly.vercel.app/sitemap.xml
