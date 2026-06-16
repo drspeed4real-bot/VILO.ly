@@ -22,7 +22,7 @@ export default async function handler(req) {
 
   if (g) {
     const pageUrl = `${url.origin}/${slug}`;
-    const title   = `${g.title} — العب مجاناً | GameVault`;
+    const title = `${g.title} | VILO.LY`;
     const desc    = g.meta_description || g.description || '';
     const image   = g.thumbnail_url || '';
 
@@ -35,6 +35,10 @@ export default async function handler(req) {
       .replace(/(<meta property="og:url"[^>]*content=")[^"]*/i, `$1${pageUrl}`)
       .replace(/(<meta name="twitter:title"[^>]*content=")[^"]*/i, `$1${title}`)
       .replace(/(<meta name="twitter:description"[^>]*content=")[^"]*/i, `$1${desc}`)
+      .replace(
+ /(<link rel="canonical"[^>]*href=")[^"]*/i,
+ `$1${pageUrl}`
+)
       .replace(/(<meta name="twitter:image"[^>]*content=")[^"]*/i, `$1${image}`);
   }
 
