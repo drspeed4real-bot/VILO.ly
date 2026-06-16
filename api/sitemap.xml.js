@@ -41,6 +41,11 @@ ${urls}
     res.status(200).send(sitemap);
 
   } catch (err) {
-    res.status(500).send('Error generating sitemap');
-  }
+  console.error(err);
+
+  res.status(500).json({
+    error: err.message,
+    stack: err.stack
+  });
+}
 }
