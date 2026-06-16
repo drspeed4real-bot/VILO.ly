@@ -10,7 +10,7 @@
     },
     {
       "source": "/:slug",
-      "destination": "/api/game-meta?slug=:slug"
+      "destination": "/game-meta?slug=:slug"
     }
   ]
 }
