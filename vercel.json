@@ -13,10 +13,6 @@
       "destination": "/api/game-meta?slug=:slug"
     },
     {
-      "source": "/((?!api/).*\\.(css|js|png|jpg|jpeg|svg|ico|woff|woff2))",
-      "destination": "/$1.$2"
-    },
-    {
       "source": "/(.*)",
       "destination": "/404.html"
     }
