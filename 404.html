@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta property="og:image" content="https://vilo-ly.vercel.app/api/og/default">
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="theme-color" content="#0d0d0f"/>
 
-  <title id="pageTitle">ERROR 404</title>
- 
-  <meta name="robots" content="index, follow"/>
+  <title id="pageTitle">الصفحة غير موجودة | VILO.LY</title>
+
+  <meta name="robots" content="noindex, follow"/>
   <link rel="canonical" id="canonical" href=""/>
 
-
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="VILO.LY"/>
+  <meta property="og:title" content="الصفحة غير موجودة | VILO.LY"/>
+  <meta property="og:description" content="الرابط غير صحيح أو تمت إزالة هذه الصفحة."/>
+  <meta property="og:image" content="https://vilo-ly.vercel.app/Gemini_Generated_Image_s3fwkbs3fwkbs3fw.png"/>
 
   <script type="application/ld+json" id="schemaScript">{}</script>
 
@@ -108,19 +111,6 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
-  
-const pathParts = window.location.pathname.split('/').filter(Boolean);
-
-if (!slug) {
-  if (pathParts.length === 1) {
-    slug = pathParts[0];
-  } else {
-    showError();
-    return;
-  }
-}
-</script>
 <script>
 function toggleSidebar() {
   document.getElementById('sidebar')?.classList.toggle('open');
