@@ -1,0 +1,9 @@
+{
+  "name": "vilo-ly",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@vercel/og": "^0.6.3",
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
