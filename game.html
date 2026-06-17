@@ -197,10 +197,11 @@ async function loadGamePage(id, slug) {
     currentGame = g; // متغيّر عام من app.js — تستفيد منه toggleLike / shareGame / reloadFrame / openGameNewTab
 
     await renderGame(g);
-    injectSEO(g);
 
     document.getElementById('loaderState').classList.add('hidden');
     document.getElementById('gameContent').classList.remove('hidden');
+
+    injectSEO(g); // غير حرجة — لا تمنع عرض اللعبة حتى لو فشلت
 
   } catch (e) {
     console.error(e);
@@ -209,30 +210,37 @@ async function loadGamePage(id, slug) {
 }
 
 async function renderGame(g) {
-  document.getElementById('topbarTitle').textContent = g.title;
-  document.getElementById('gameTitle').textContent   = g.title;
-  document.getElementById('gameDesc').textContent    = g.description || '';
-  document.getElementById('gmEngine').textContent    = g.engine || '';
-  document.getElementById('gmCategory').textContent  = g.category || '';
-  document.getElementById('gmTags').innerHTML = (g.tags || []).map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
-  document.getElementById('likeCount').textContent   = g.likes_count || 0;
+  setMetaSafe('topbarTitle', 'textContent', g.title);
+  setMetaSafe('gameTitle', 'textContent', g.title);
+  setMetaSafe('gameDesc', 'textContent', g.description || '');
+  setMetaSafe('gmEngine', 'textContent', g.engine || '');
+  setMetaSafe('gmCategory', 'textContent', g.category || '');
+  const tagsEl = document.getElementById('gmTags');
+  if (tagsEl) tagsEl.innerHTML = (g.tags || []).map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
+  setMetaSafe('likeCount', 'textContent', g.likes_count || 0);
 
   // معلومات الناشر
-  if (g.uploader_id) {
-    const { data: prof } = await sb.from('profiles').select('username').eq('id', g.uploader_id).single();
-    document.getElementById('gmUploader').textContent = prof?.username || 'مجهول';
-  } else {
-    document.getElementById('gmUploader').textContent = 'مجهول';
+  try {
+    if (g.uploader_id) {
+      const { data: prof } = await sb.from('profiles').select('username').eq('id', g.uploader_id).single();
+      setMetaSafe('gmUploader', 'textContent', prof?.username || 'مجهول');
+    } else {
+      setMetaSafe('gmUploader', 'textContent', 'مجهول');
+    }
+  } catch (e) {
+    console.error('failed to load uploader info (non-fatal):', e);
+    setMetaSafe('gmUploader', 'textContent', 'مجهول');
   }
 
   // حالة الإعجاب
   const liked = likedGames.has(g.id);
-  document.getElementById('likeIcon').textContent = liked ? '❤️' : '🤍';
-  document.getElementById('likeBtn').className = 'action-btn like-btn' + (liked ? ' liked' : '');
+  setMetaSafe('likeIcon', 'textContent', liked ? '❤️' : '🤍');
+  const likeBtnEl = document.getElementById('likeBtn');
+  if (likeBtnEl) likeBtnEl.className = 'action-btn like-btn' + (liked ? ' liked' : '');
 
   // تحميل اللعبة في iframe
   const frame = document.getElementById('gameFrame');
-  await loadGameInFrame(frame, g.game_url || '');
+  if (frame) await loadGameInFrame(frame, g.game_url || '');
 }
 
 // مثل toggleLike في app.js لكن يوجّه الزائر غير المسجّل لتسجيل الدخول من الصفحة الرئيسية
@@ -269,43 +277,54 @@ function toggleStandaloneView() {
 }
 
 // ===== SEO =====
+function setMetaSafe(id, prop, value) {
+  const el = document.getElementById(id);
+  if (el) el[prop] = value;
+}
+
 function injectSEO(g) {
-  const url = window.location.href;
-  const title = `${g.title} — العب مجاناً | VILO.LY`;
+  try {
+    const url = window.location.href;
+    const title = `${g.title} — العب مجاناً | VILO.LY`;
 
-  document.title = title;
-  document.getElementById('pageTitle').textContent = title;
+    document.title = title;
+    setMetaSafe('pageTitle', 'textContent', title);
 
-  const desc = g.meta_description || g.description || '';
-  document.getElementById('metaDesc').content = desc;
+    const desc = g.meta_description || g.description || '';
+    setMetaSafe('metaDesc', 'content', desc);
 
-  const tagsList = (g.tags || []).join(', ');
-  document.getElementById('metaKeywords').content = [tagsList, g.title, 'العاب', 'VILO.LY'].filter(Boolean).join(', ');
+    const tagsList = (g.tags || []).join(', ');
+    setMetaSafe('metaKeywords', 'content', [tagsList, g.title, 'العاب', 'VILO.LY'].filter(Boolean).join(', '));
 
-  document.getElementById('canonical').href = url;
+    setMetaSafe('canonical', 'href', url);
 
-  document.getElementById('ogTitle').content = g.title;
-  document.getElementById('ogDesc').content  = desc;
-  document.getElementById('ogUrl').content   = url;
-  if (g.thumbnail_url) document.getElementById('ogImage').content = g.thumbnail_url;
+    setMetaSafe('ogTitle', 'content', g.title);
+    setMetaSafe('ogDesc', 'content', desc);
+    setMetaSafe('ogUrl', 'content', url);
+    if (g.thumbnail_url) setMetaSafe('ogImage', 'content', g.thumbnail_url);
 
-  document.getElementById('twTitle').content = g.title;
-  document.getElementById('twDesc').content  = desc;
-  if (g.thumbnail_url) document.getElementById('twImage').content = g.thumbnail_url;
+    setMetaSafe('twTitle', 'content', g.title);
+    setMetaSafe('twDesc', 'content', desc);
+    if (g.thumbnail_url) setMetaSafe('twImage', 'content', g.thumbnail_url);
 
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": g.title,
-    "description": g.description,
-    "url": url,
-    "image": g.thumbnail_url || "",
-    "genre": g.category,
-    "applicationCategory": "Game",
-    "operatingSystem": "Any"
-  };
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": g.title,
+      "description": g.description,
+      "url": url,
+      "image": g.thumbnail_url || "",
+      "genre": g.category,
+      "applicationCategory": "Game",
+      "operatingSystem": "Any"
+    };
 
-  document.getElementById('schemaScript').textContent = JSON.stringify(schema, null, 2);
+    const schemaEl = document.getElementById('schemaScript');
+    if (schemaEl) schemaEl.textContent = JSON.stringify(schema, null, 2);
+  } catch (e) {
+    // لا نسمح لأي خطأ في حقن SEO بإيقاف عرض اللعبة
+    console.error('injectSEO failed (non-fatal):', e);
+  }
 }
 
 function showError() {
