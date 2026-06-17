@@ -12,6 +12,10 @@
       "source": "/:slug((?!.*\\.).*)",
       "destination": "/api/game-meta?slug=:slug"
     },
+      {
+      "source": "/(.*)/",
+      "destination": "/404.html"
+    },
     {
       "source": "/(.*)",
       "destination": "/404.html"
